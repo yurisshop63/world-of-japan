@@ -3,8 +3,8 @@
 > Fichier d'état du projet — mis à jour par l'agent (DeepSeek/OpenCode) à la fin de chaque session de travail.
 > Objectif : qu'une nouvelle session (ou un autre worker) puisse reprendre sans que l'humain ait à tout réexpliquer.
 
-**Dernière mise à jour :** 2026-08-21
-**Dernier commit poussé :** `f7ab2a6`
+**Dernière mise à jour :** 2026-08-22
+**Dernier commit poussé :** `7ffbc4a`
 
 ---
 
@@ -188,18 +188,18 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 	  - Il écoute `MenuConfig.config_changed` → `_apply_opposite_side()`.
 	  - Drag du joystick (long-press-then-drag, mêmes `long_press_time = 0.35` /
 	    `drag_threshold = 14.0` que draggable_button.gd) : si le joystick relâché
-	    est de l'autre côté de la moitié d'écran, il appelle
+		est de l'autre côté de la moitié d'écran, il appelle
 	    `MenuConfig.set_side(_opposite(released_side))` — même API que le drag du
 	    menu lui-même, pas de logique dupliquée. Un flag `_ignore_next_config`
 	    empêche le joystick de se re-repositionner aussitôt après son propre drag.
 	  - Réciproque : si le MENU est dragué (menu_root_button.gd existant → 
 	    `MenuConfig.set_side`), `config_changed` est émis → le joystick bascule
 	    automatiquement de côté. Résultat : menu et joystick TOUJOURS opposés,
-	    quel que soit celui qu'on déplace.
+		quel que soit celui qu'on déplace.
 	  - **Choix (étape 4.4)** : PAS de position fine persistante du joystick.
-	    Position = côté opposé au menu (recalculée à chaque bascule/redim),
-	    repositionnement libre du drag temporaire (perdu au prochain basculement).
-	    Cohérent avec le menu (qui n'a pas de position fine non plus). Pas de
+		Position = côté opposé au menu (recalculée à chaque bascule/redim),
+		repositionnement libre du drag temporaire (perdu au prochain basculement).
+		Cohérent avec le menu (qui n'a pas de position fine non plus). Pas de
 	    nouveau fichier de config : la source de vérité reste `MenuConfig.side`
 	    (déjà persisté dans `user://menu_config.cfg`).
 - [x] **Intégration `main.tscn`** : instance `VirtualJoystick` ajoutée comme
@@ -211,6 +211,93 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 	  drag simulé du joystick de l'autre côté → `MenuConfig.side` bascule (sens
 	  joystick→menu) ; boutons FACE/STICK présents. Lancement complet
 	  `--quit-after 6` : aucun script error ni warning.
+
+### 🕹️ Session "écran de dessin + joystick fix" (3 chantiers)
+- [x] **Chantier 1 — Correctif joystick (course diagonale permanente)** :
+	  bug trouvé : au relâchement d'un appui simple, `_end_press()` appelait
+	  `_update_stick(Vector2.ZERO)` qui calculait `delta = (0,0)-(60,80)` →
+	  `move_vector` restait à (-0.6, -0.8) sans jamais être remis à zéro, et
+	  `player.gd` additionnait `mv` sans vérifier `MobileInput.active` → le joueur
+	  courait en permanence en diagonale avant-gauche. Corrigé :
+	  - `_reset_stick()` : stick visuel **instantanément au centre** (`_center()`),
+	    `move_vector = ZERO`, `active = false`, sans interpolation (appelé à
+	    `_end_press()` et au passage en mode drag).
+	  - **Dead zone** `DEAD_ZONE = 0.12` (12% de `MAX_OFFSET` = 36, soit ~4.3px) :
+	    tant que le doigt/curseur reste dans cette zone, `move_vector` reste à
+	    ZERO (le stick visuel peut bouger, l'input non). Anti-tremblement et
+	    anti-résidu au relâchement.
+	  - **Garde double** dans `player.gd::_physics_process` :
+	    `if MobileInput.active and mv.length() > 0.01:` — l'input mobile n'est
+	    jamais additionné quand `active == false`.
+	  - Helper `_center()` centralisé (base du stick en coords locales).
+	  - Validation headless (autoload temporaire retiré) : dead zone au centre /
+	    à 2px → ZERO ; à 10px → non nul ; relâchement simple et après drag →
+	    move_vector=ZERO, active=false, stick au centre, menu inchangé ;
+	    `active=false` → le joueur ne bouge pas. 6/6 OK.
+- [x] **Chantier 2 — Refonte complète de l'écran de dessin de kanji** :
+	  `kanji/kanji_draw_popup.gd/.tscn` réécrits — l'UI est **entièrement
+	  construite en code** (le `.tscn` est réduit au CanvasLayer racine) pour un
+	  positionnement dynamique selon `MenuConfig.side` :
+	  - **Position/taille en repère GridOverlay** (`MenuLayout.rect_from_right`,
+	    même grille 24×11 que `GridOverlay`/`menu_layout.gd`) : carré de dessin
+	    ancré du **même côté que le bouton MENU** (`MenuConfig.side`), lignes
+	    **B..J** en hauteur (indices 1..9), colonnes **1..9** en largeur (col 1 =
+	    bord droit). Le bord bas tombe sur le haut de la ligne K (juste au-dessus
+	    du bandeau summary), le bord haut juste sous le bouton MENU. Bascule en
+	    miroir sur `MenuConfig.config_changed` (pattern `_apply_layout`, pas de
+	    logique dupliquée). Le joystick reste toujours côté opposé (inchangé).
+	  - **3 boutons d'action circulaires** en bas du carré, centrés verticalement
+	    (le gros Valider fixe la ligne) : **Valider** (vert, bas-droite, plus gros
+	    ≈ une case de grille → `drawing_validated(score, elapsed_ms)`) ;
+	    **Retour dernier trait** (orange, bas-centre, **undo unitaire** — retire
+	    UN trait de la pile `player_strokes` + son Line2D, ne fait rien si vide) ;
+	    **Effacer** (rouge, bas-gauche, reset complet). Le bouton **Annuler**
+	    global (fermeture, ESC) reste **séparé** (haut-droite du carré, gris).
+	  - **3 références de kanji au choix**, affichées **au-dessus et du côté
+	    opposé au menu** par rapport au carré (vers le centre de l'écran) :
+	    droitier → haut-gauche ; gaucher → haut-droite. Clic/tap sur une référence
+	    → elle devient le kanji actif (`_selected_index`), son `par_time_ms` est
+	    appliqué, et le scoring (`StrokeScoring`) se fait contre ELLE (pas contre
+	    un kanji fixe imposé). Surlignage vert de la référence sélectionnée.
+	    Le premier candidat (kanji du skill) est sélectionné par défaut.
+	  - **Suppression de l'assombrissement de fond** : plus aucun `ColorRect`
+	    semi-transparent. La racine est en `MOUSE_FILTER_IGNORE` (le monde 3D et
+	    le joystick restent visibles/interactifs, seuls les enfants STOP captent).
+	  - `open(candidates)` : nouvel argument = liste de dicts
+	    `{"svg","par_time_ms","name"}` (3 références). `skill_bar.gd` a gagné
+	    `_build_candidates(skill)` : kanji du skill + 2 autres tirés au hasard
+	    dans `KANJI_DATA` (TODO commenté : affiner la pertinence élémentaire,
+	    cf. ROADMAP point 2).
+	  - Validation headless (autoload temporaire retiré) : carré droitier en
+	    B-J/1-9 (9×9 cases, bord droit, haut = ligne B, bas = haut de ligne K) ;
+	    3 références en haut-gauche avec traits dessinés ; 3 boutons positionnés
+	    (Effacer/Retour/Valider, Valider plus gros) ; bascule `set_side(LEFT)` →
+	    carré à gauche + références en haut-droite ; aucun ColorRect dans l'arbre ;
+	    undo unitaire retire un trait à la fois ; sélection de référence change
+	    le kanji de scoring (parfait = 100) + `par_time_ms`. 7/7 OK.
+- [x] **Chantier 3 — Base de données de kanji étendue (4 → 14)** :
+	  - 10 nouveaux SVG depuis **KanjiVG** (`github.com/KanjiVG/kanjivg`, licence
+	    CC BY-SA 3.0 — `CREDITS.md` mis à jour) : `06728.svg` (木, 4 traits),
+	    `091d1.svg` (金, 8), `06708.svg` (月, 4), `065e5.svg` (日, 4),
+	    `05c71.svg` (山, 3), `05ddd.svg` (川, 3), `096f7.svg` (雷, 13),
+	    `096e8.svg` (雨, 8), `068ee.svg` (森, 12), `082b1.svg` (花, 7).
+	    **Codepoints vérifiés** (piège U+5730/U+571F de la session précédente) :
+	    木=U+6728, 金=U+91D1, 月=U+6708, 日=U+65E5, 山=U+5C71, 川=U+5DDD,
+	    雷=U+96F7, 雨=U+96E8, 森=U+68EE, 花=U+82B1. `kvg:element` = kanji attendu
+	    (vérifié par script). `.import` générés par `godot --import`.
+	  - `KANJI_DATA` dans `skill_bar.gd` : 14 entrées (4 originaux + 10 nouveaux
+	    : Bois/Or/Lune/Soleil/Montagne/Rivière/Tonnerre/Pluie/Forêt/Fleur).
+	    `par_time_ms` extrapolé (~base 700 + ~500-550 ms/trait, cohérent avec
+	    水=3000/4 traits, 土=2000/3, 火=2800/4, 風=5500/9) : ex 雷=8000 (13 traits),
+	    森=7200 (12), 金/雨=5000 (8), 花=4300 (7), 木/月/日=2800 (4), 山/川=2000 (3).
+	  - `run_auto_test_all()` étendu aux 14 kanji (perfect/random/noisy).
+	    **Constantes de scoring intactes** (`DISTANCE_TO_SCORE_FACTOR = 2.2`,
+	    verdict ≥ 60, normalisation globale par côté — décisions actées non
+	    touchées).
+	  - Validation headless (autoload temporaire retiré) : les 14 SVG chargent
+	    le bon nombre de traits ; parfait = 100 partout ; imprécis = 74-88 ;
+	    aléatoire faible ; `KANJI_DATA` = 14 entrées ; popup ouvrable avec
+	    chacun des 14 kanji. Lancement complet : aucun script error ni warning.
 
 ## 🚧 En cours
 - [ ] _(aucun blocage actif)_
@@ -232,28 +319,37 @@ Toute cette session RÉUTILISE cette source de vérité (le joystick lit
 ## 📋 À faire ensuite (priorité)
 1. Phase 1 : quête simple, loot, inventaire, XP = précision × vitesse moyen du combat
    (TODO laissé en commentaire dans `skill_bar.gd`).
-2. Associer un effet élémentaire aux kanji/mobs (Feu/Terre/Vent/Eau) — actuellement
-   pas de différenciation de puissance entre éléments (uniquement visuelle).
+2. Associer un effet élémentaire aux kanji/mobs (Feu/Terre/Vent/Eau...) — actuellement
+   pas de différenciation de puissance entre éléments (uniquement visuelle). La base
+   est maintenant assez riche (14 kanji) pour ça. Idem : `_build_candidates()` propose
+   un kanji de skill + 2 au hasard — affiner la pertinence "élémentaire" (proposer en
+   priorité des kanji du même élément) reste un TODO (commenté dans `skill_bar.gd`).
 3. **Macros textuelles (Étape 3 de la session raccourcis, optionnelle)** : champ de
    saisie simple façon chat MMO pour taper `/face` ou `/stick` et déclencher la même
    action. NON implémenté cette session (les raccourcis clavier directs suffisent
    pour l'Alpha). TODO clair : ajouter un LineEdit + parser les commandes `/...`
    qui appellent `Player.face()` / `Player.toggle_stick()` (les fonctions sont déjà
    publiques et prêtes à être réutilisées par les boutons mobiles aussi).
-4. Contrôle mobile — **joystick + boutons FACE/STICK FAITS cette session**
-   (`ui/virtual_joystick.gd/.tscn`, autoload MobileInput). Reste éventuel :
-   boutons de skills mobiles, tests réels sur Android.
+4. Contrôle mobile — joystick + boutons FACE/STICK FAITS. Reste éventuel :
+   boutons de skills mobiles (slots 1-4, réutiliser SkillBar), test réel sur
+   Android. Le joystick a été corrigé (dead zone + reset au centre).
 
 ---
 
 ## 🗂️ Fichiers clés
-- `kanji/kanji_draw_popup.gd` / `.tscn` — popup de dessin réutilisable (signaux).
+- `kanji/kanji_draw_popup.gd` / `.tscn` — popup de dessin réutilisable (signaux),
+  UI construite en code : carré ancré côté menu (repère GridOverlay B-J/1-9),
+  3 références au choix, 3 boutons (Valider/Retour/Effacer), pas d'assombrissement.
 - `kanji/stroke_scoring.gd`, `kanji/svg_parser.gd` — modules importés
-  (score kanji ; `run_auto_test_all()` pour valider les 4 kanji).
-- `kanji/kanji_data/*.svg` — 4 kanji de référence : `06c34.svg` (水, 4 traits),
-  `0571f.svg` (土, 3), `0706b.svg` (火, 4), `098a8.svg` (風, 9). Source KanjiVG.
-- `skill_bar.gd` — `KANJI_DATA` (4 skills élémentaires) + `use_slot()` branché
-  sur le popup + formule dégâts/score.
+  (score kanji ; `run_auto_test_all()` pour valider les 14 kanji).
+- `kanji/kanji_data/*.svg` — **14 kanji de référence** : `06c34.svg` (水, 4),
+  `0571f.svg` (土, 3), `0706b.svg` (火, 4), `098a8.svg` (風, 9), `06728.svg`
+  (木, 4), `091d1.svg` (金, 8), `06708.svg` (月, 4), `065e5.svg` (日, 4),
+  `05c71.svg` (山, 3), `05ddd.svg` (川, 3), `096f7.svg` (雷, 13), `096e8.svg`
+  (雨, 8), `068ee.svg` (森, 12), `082b1.svg` (花, 7). Source KanjiVG.
+- `skill_bar.gd` — `KANJI_DATA` (14 skills élémentaires) + `use_slot()` branché
+  sur le popup + `_build_candidates()` (kanji du skill + 2 au hasard) +
+  formule dégâts/score.
 - `HexagonalGround.gd` — terrain : grille de tuiles hexagonales colorées par
   FastNoiseLite (roche/terre/herbe), collision + murs.
 - `mob.gd` / `mob.tscn` — mob paramétré par `mob_type` (7 types 曜日, modèles en
@@ -343,6 +439,29 @@ Toute cette session RÉUTILISE cette source de vérité (le joystick lit
   `mv.y < -0.5` = pousser vers l'avant (active le multiplicateur de vitesse).
 - TODO Phase 1 laissé en commentaire : XP finale = produit précision × vitesse du
   combat (score moyen des kanji utilisés).
+- **Joystick : dead zone 12% de MAX_OFFSET + reset au centre** (choix de session) :
+  `_reset_stick()` remet stick visuel au centre exact + `move_vector=ZERO` +
+  `active=false` au relâchement ET au passage en mode drag. `DEAD_ZONE = 0.12`
+  garde `move_vector` à ZERO tant que le doigt est dans ~4.3px du centre.
+  `player.gd` ne lit l'input mobile que si `MobileInput.active` (garde double).
+- **Écran de dessin : géométrie en repère GridOverlay** (choix de session) :
+  le carré de dessin suit `MenuConfig.side` (MÊME côté que le menu) avec
+  `MenuLayout.rect_from_right(vp, Vector2i(1,9), Vector2i(1,9))` (lignes B-J,
+  colonnes 1-9). Ne PAS dupliquer ce calcul ailleurs — utiliser `_draw_square_rect()`
+  du popup ou `MenuLayout` directement. La racine du popup est en
+  `MOUSE_FILTER_IGNORE` : monde + joystick restent interactifs pendant le dessin.
+- **3 références au choix + scoring contre le kanji sélectionné** : le popup
+  reçoit `open(candidates)` (3 dicts `{"svg","par_time_ms","name"}`), le joueur
+  clique la référence à dessiner. `par_time_ms` suit la sélection (le temps
+  imparti dépend du kanji réellement dessiné). Premier candidat = kanji du skill.
+- **Undo unitaire (Retour)** : retire UN trait (`player_strokes` + son `Line2D`
+  via `_stroke_lines` parallèle). Ne touche jamais la référence. Ne fait rien si
+  vide. Effacer = reset complet de la pile.
+- **Base kanji : 14 kanji, par_time_ms extrapolé** (choix de session) : ~base
+  700 + ~500-550 ms/trait (cohérent avec les 4 valeurs d'origine). Ajouter un
+  kanji = SVG KanjiVG dans `kanji/kanji_data/` + vérifier le codepoint
+  (`kvg:element`) + `--import` + entrée `KANJI_DATA` + ligne dans
+  `run_auto_test_all()` + `CREDITS.md`. Constantes de scoring intactes.
 
 ## 🔗 Dépendances / éléments externes
 - Godot 4.7.1 : `C:\Program Files (x86)\Godot\Godot_v4.7.1-stable_win64_console.exe`.
@@ -365,18 +484,21 @@ Toute cette session RÉUTILISE cette source de vérité (le joystick lit
 Projet Godot dans `jeu-mmorpg-japanese-learning-ARCHIVE/` (le dossier EST le projet).
 Tester : lancer la scène `main.tscn` headless (`--headless --path . --quit-after 5`) —
 pas d'erreur attendue au démarrage (terrain + 21 mobs + joueur). Le scoring se vérifie
-via `StrokeScoring.run_auto_test()` (attendu : parfait 100, aléatoire ~0-15, humain
-imprécis 65-85). Compiler un script avec `--check-only --script <fichier.gd>`
-(piège : échoue sur les autoloads hors contexte de jeu). Pour tester le popup :
-instancier `res://kanji/kanji_draw_popup.tscn` puis `open()`. Pour tester les mobs :
-instancier `mob.tscn`, régler `mob_type`, appeler `take_damage()`. Pour tester les
-commandes : `Player.face()`, `Player.toggle_stick()` (avec `TargetSystem.select(mob)`
-au préalable). Fenêtre raccourcis : ouvrir le menu circulaire (bouton MENU) puis
-l'action "Raccourcis", ou appeler `WindowManager.open_action(5)`. Joystick : présent
-dans `main.tscn` (enfant UI), utiliser la souris pour le stick ; `MobileInput.move_vector`
-est lu par player.gd. Test synchro croisée : draguer le joystick de l'autre côté →
-le menu bascule (et inversement). Pour la console :
-lancer `chcp 65001` avant (sinon kanji mal affichés, codepage 850).
+via `StrokeScoring.run_auto_test_all()` (attendu : parfait 100, aléatoire faible,
+humain imprécis 65-89, sur les 14 kanji). Compiler un script avec
+`--check-only --script <fichier.gd>` (piège : échoue sur les autoloads hors contexte
+de jeu). Pour tester le popup : instancier `res://kanji/kanji_draw_popup.tscn` puis
+`open(candidates)` avec une liste de dicts `{"svg","par_time_ms","name"}`. Pour tester
+les mobs : instancier `mob.tscn`, régler `mob_type`, appeler `take_damage()`. Pour
+tester les commandes : `Player.face()`, `Player.toggle_stick()` (avec
+`TargetSystem.select(mob)` au préalable). Fenêtre raccourcis : ouvrir le menu
+circulaire (bouton MENU) puis l'action "Raccourcis", ou appeler
+`WindowManager.open_action(5)`. Joystick : présent dans `main.tscn` (enfant UI),
+utiliser la souris pour le stick ; dead zone 12% + reset au centre au relâchement ;
+`MobileInput.move_vector` est lu par player.gd (garde `active`). Écran de dessin :
+le carré suit le côté du menu (bascule avec lui), 3 références cliquables en haut
+du côté opposé, boutons Valider/Retour/Effacer en bas, Annuler (ESC) en haut-droite.
+Pour la console : lancer `chcp 65001` avant (sinon kanji mal affichés, codepage 850).
 
 ---
 

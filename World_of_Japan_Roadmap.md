@@ -307,7 +307,8 @@ d'investir dans le contenu à l'échelle.
       pour sortir du cas unique et valider que le système généralise — **fait** :
       土 (0571f.svg, 3 traits), 火 (0706b.svg, 4), 風 (098a8.svg, 9) depuis
       KanjiVG (CC BY-SA), skills slots 1-4 équipés, scoring validé (parfait=100
-      sur les 4)
+      sur les 4). **Étendu à 14 kanji** (session écran de dessin) : + 木金月日
+      山川雷雨森花, base dans `KANJI_DATA`, `run_auto_test_all()` sur les 14.
 
 ## Phase 1 — Boucle de jeu minimale (Alpha)
 - [x] Diversité visuelle du monde (pré-requis jugement "fun") — **fait** :
@@ -331,7 +332,14 @@ d'investir dans le contenu à l'échelle.
       (`ui/virtual_joystick.gd/.tscn`) + boutons FACE/STICK, autoload
       MobileInput, positionné à l'opposé du menu circulaire avec synchronisation
       croisée (menu ↔ joystick toujours opposés, drag du joystick pour le
-      repositionner + basculer le menu). Test réel Android : reste à faire.
+      repositionner + basculer le menu). **Corrigé** (session écran de dessin) :
+      dead zone 12% de MAX_OFFSET + reset au centre au relâchement (fin de la
+      course diagonale permanente). Test réel Android : reste à faire.
+- [x] Écran de dessin ergonomique — **fait** (session écran de dessin) : carré
+      de dessin ancré du côté du menu (repère GridOverlay B-J/1-9), 3 références
+      de kanji au choix (clic pour sélectionner celle à dessiner), 3 boutons
+      ronds (Valider/Retour-dernier-trait/Effacer), plus d'assombrissement de
+      fond (le monde reste visible pendant le dessin).
 - [ ] Boutons de skills mobiles (slots 1-4) à l'écran (réutiliser SkillBar)
 - [ ] Onboarding minimal (comment dessiner, comment viser)
 - [ ] Ajustement de la difficulté du scoring (seuil de réussite, tolérance)
