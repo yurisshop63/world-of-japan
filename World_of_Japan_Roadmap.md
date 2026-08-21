@@ -272,19 +272,23 @@ d'investir dans le contenu à l'échelle.
 
 **Projet A — `jeu-mmorpg-japanese-learning-ARCHIVE`** (Godot 4.7, 3D)
 - ✅ Joueur 3D (déplacement, caméra souris, animation de marche)
-- ✅ Mob avec IA (idle → chase → attaque → return → respawn, leash)
+- ✅ Mob avec IA (idle → chase → attaque → return → respawn, leash) + 7 types
+      élémentaires 曜日 (火水±月木金日) en primitives low-poly
+- ✅ Terrain procédural (tuiles hex FastNoiseLite, roche/terre/herbe) + murs
 - ✅ Système de cible (clic = raycast + sélection)
-- ✅ `SkillBar` (9 slots, dégâts aléatoires 2-6, portée 3m) + `MacroBar` UI
+- ✅ `SkillBar` (9 slots, kanji 水/土/火/風, dégâts précision × vitesse) + `MacroBar` UI
 - ✅ `PlayerStats` (vie, mana, XP par bulles façon DAoC, XP PvP séparée)
 - ✅ Menu circulaire complet, déplaçable, sauvegardé
-- ❌ Pas de quête, pas de loot, pas de kanji intégré
+- ❌ Pas de quête, pas de loot, pas d'inventaire
 - ⚠️ Pas de dépôt git détecté dans l'archive — à confirmer/créer
 
 **Projet B — `kanji-game`** (Godot 4.7, dépôt git déjà poussé sur GitHub)
 - ✅ Dessin souris → parsing SVG (`SvgParser`) → scoring 0-100 (`StrokeScoring`)
 - ✅ Scoring validé par tests automatisés (parfait=100, aléatoire≈0, imprécis=70-97)
 - ✅ Feedback visuel (flash couleur selon score)
-- ❌ Un seul kanji (水), scène isolée, non connectée à un combat
+- ✅ 4 kanji intégrés au combat (水土火風, popup temps réel)
+- ❌ Scène isolée `test_trace.tscn` conservée comme référence — l'Alpha vit dans le
+      projet A (fusion faite en Phase 0)
 
 ---
 
@@ -304,6 +308,10 @@ d'investir dans le contenu à l'échelle.
       sur les 4)
 
 ## Phase 1 — Boucle de jeu minimale (Alpha)
+- [x] Diversité visuelle du monde (pré-requis jugement "fun") — **fait** :
+      terrain procédural (tuiles hexagonales FastNoiseLite, roche/terre/herbe)
+      + 7 types de mobs élémentaires thème 曜日 (火水±月木金日) en primitives
+      low-poly, 21 instances réparties sur le terrain
 - [ ] Quête ultra simple ("élimine 5 Mob X" ou "récupère 3 items Y")
 - [ ] Loot basique (drop d'item au décès du mob, probabilité simple)
 - [ ] Inventaire minimal (liste, pas de grille sophistiquée)

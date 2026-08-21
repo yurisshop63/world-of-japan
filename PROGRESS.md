@@ -4,7 +4,7 @@
 > Objectif : qu'une nouvelle session (ou un autre worker) puisse reprendre sans que l'humain ait à tout réexpliquer.
 
 **Dernière mise à jour :** 2026-08-21
-**Dernier commit poussé :** `36579d5`
+**Dernier commit poussé :** `0729d11`
 
 ---
 
@@ -78,24 +78,53 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 	  (origin, tracking `origin/main`).
 - [x] **Ajout de 3 kanji (土/火/風)** pour sortir du cas unique 水 :
 	  - SVG récupérés depuis **KanjiVG** (`github.com/KanjiVG/kanjivg`, licence
-	    CC BY-SA 3.0 — attribué dans `CREDITS.md` et en-tête de chaque SVG) :
-	    `0571f.svg` (土, 3 traits), `0706b.svg` (火, 4 traits), `098a8.svg`
-	    (風, 9 traits). Codepoints vérifiés : 土=U+571F, 火=U+706B, 風=U+98A8.
-	    Note : la consigne initiale donnait U+5730 (=地) pour 土, corrigé.
-	    Fichiers `.import` générés par Godot (`--import`).
+		CC BY-SA 3.0 — attribué dans `CREDITS.md` et en-tête de chaque SVG) :
+		`0571f.svg` (土, 3 traits), `0706b.svg` (火, 4 traits), `098a8.svg`
+		(風, 9 traits). Codepoints vérifiés : 土=U+571F, 火=U+706B, 風=U+98A8.
+		Note : la consigne initiale donnait U+5730 (=地) pour 土, corrigé.
+		Fichiers `.import` générés par Godot (`--import`).
 	  - **Skills associés** dans `skill_bar.gd` via `KANJI_DATA` (structure
-	    dédiée : dict nom→{name, kanji, par_time_ms}, dupliqué par slot) :
-	    slot 1 = Frappe Eau (水, 3000ms), slot 2 = Frappe Terre (土, 2000ms),
-	    slot 3 = Frappe Feu (火, 2800ms), slot 4 = Frappe Vent (風, 5500ms).
-	    Slots 5-9 vides. Pas de différenciation de puissance (base 2-6, portée 3.0).
+		dédiée : dict nom→{name, kanji, par_time_ms}, dupliqué par slot) :
+		slot 1 = Frappe Eau (水, 3000ms), slot 2 = Frappe Terre (土, 2000ms),
+		slot 3 = Frappe Feu (火, 2800ms), slot 4 = Frappe Vent (風, 5500ms).
+		Slots 5-9 vides. Pas de différenciation de puissance (base 2-6, portée 3.0).
 	  - **`run_auto_test_all()`** ajouté à `stroke_scoring.gd` (boucle sur les
-	    4 kanji) ; `run_auto_test()` reste pour 水 seul.
+		4 kanji) ; `run_auto_test()` reste pour 水 seul.
 	  - **Validation headless OK** : parfait = 100 pour les 4 kanji ; aléatoire
-	    = 14 (水), 10 (土), 26 (火), 5 (風) ; humain imprécis = 79-89. Le 26 de
-	    火 reste très en dessous du seuil de réussite (60) : artefact statistique
-	    (traits aléatoires qui recoupent le cadre), pas un défaut de scoring.
-	    Slots vérifiés (4 équipés, 5-9 vides), popup ouverte avec chacun des
-	    4 kanji (traits affichés 4/3/4/9), jeu complet lancé sans erreur.
+		= 14 (水), 10 (土), 26 (火), 5 (風) ; humain imprécis = 79-89. Le 26 de
+		火 reste très en dessous du seuil de réussite (60) : artefact statistique
+		(traits aléatoires qui recoupent le cadre), pas un défaut de scoring.
+		Slots vérifiés (4 équipés, 5-9 vides), popup ouverte avec chacun des
+		4 kanji (traits affichés 4/3/4/9), jeu complet lancé sans erreur.
+- [x] **Terrain procédural** (`HexagonalGround.gd`) : le sol n'est plus un unique
+	  hexagone monochrome. Grille de petits hexagones (tuiles, `hex_size = 5`)
+	  couvrant le disque de rayon 50, chacun coloré par **FastNoiseLite**
+	  (Simplex + FBM 3 octaves, fréquence 0.04) interpolé entre 3 teintes —
+	  roche / terre brune / herbe. Choix technique : **noise-based per-tile
+	  color** (un `StandardMaterial3D` par tuile, couleur dérivée du bruit à la
+	  position de la tuile), pas de texture externe, léger. Collision (box
+	  `radius*2.3`) et 6 murs inchangés. `material_color` retiré (était forcé en
+	  cyan dans main.tscn).
+- [x] **7 types de mobs élémentaires** (thème 曜日, jours de la semaine) dans
+	  `mob.gd`/`mob.tscn` : un seul `mob.tscn` paramétré par `mob_type` (enum
+	  `MobType`), silhouette construite par script en **primitives low-poly**
+	  (Sphere/Box/CylinderMesh) — pas d'assets externes, cohérent avec le joueur
+	  (BoxMesh). Chaque type : couleur (albedo), forme, échelle, hauteur de
+	  health bar. Les 7 : 火 Feu (flamme rouge/orange), 水 Eau (sphère bleue
+	  aplatie + vaguelettes), 土 Terre (bloc brun), 月 Lune/lundi (bleu pâle +
+	  cratères), 木 Bois/jeudi (tronc + feuillage), 金 Or/vendredi (lingot doré +
+	  pépites), 日 Soleil/dimanche (sphère jaune + 8 rayons). IA, `take_damage`,
+	  états IDLE/CHASE/RETURN/DEAD, respawn et health_bar **inchangés** — seul le
+	  visuel diffère.
+- [x] **Placement mobs** dans `main.tscn` : 21 instances (3 par type) réparties
+	  sur 3 anneaux concentriques (rayons ~18 / ~30 / ~42, angles décalés) pour
+	  éviter les amas et l'aggro en chaîne (un mob de chaque type par anneau).
+	  Joueur spawn au centre (0,3,0) : aucun mob à moins de ~18 unités.
+- [x] **Validation mobs** (headless, autoload temporaire retiré ensuite) : 21
+	  mobs présents (3 par type), modèle construit pour chaque type (3 à 9
+	  primitives), `take_damage(5)` décrémente et passe en CHASE, mise à 0 →
+	  DEAD, respawn programmé. Lancement complet `--quit-after 8` : aucun script
+	  error ni warning.
 
 ## 🚧 En cours
 - [ ] _(aucun blocage actif)_
@@ -103,8 +132,8 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 ## 📋 À faire ensuite (priorité)
 1. Phase 1 : quête simple, loot, inventaire, XP = précision × vitesse moyen du combat
    (TODO laissé en commentaire dans `skill_bar.gd`).
-2. Associer un effet élémentaire aux kanji (Feu/Terre/Vent/Eau) — actuellement
-   pas de différenciation de puissance entre éléments.
+2. Associer un effet élémentaire aux kanji/mobs (Feu/Terre/Vent/Eau) — actuellement
+   pas de différenciation de puissance entre éléments (uniquement visuelle).
 
 ---
 
@@ -116,6 +145,10 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
   `0571f.svg` (土, 3), `0706b.svg` (火, 4), `098a8.svg` (風, 9). Source KanjiVG.
 - `skill_bar.gd` — `KANJI_DATA` (4 skills élémentaires) + `use_slot()` branché
   sur le popup + formule dégâts/score.
+- `HexagonalGround.gd` — terrain : grille de tuiles hexagonales colorées par
+  FastNoiseLite (roche/terre/herbe), collision + murs.
+- `mob.gd` / `mob.tscn` — mob paramétré par `mob_type` (7 types 曜日, modèles en
+  primitives low-poly). `main.tscn` — 21 instances (3 par type).
 - `CREDITS.md` — attribution KanjiVG (licence CC BY-SA 3.0).
 - `World_of_Japan_Roadmap.md` — feuille de route (Phase 0 cochée partiellement).
 
@@ -135,7 +168,7 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
   si score ≥ 40. Détails paliers dans `skill_bar.gd` / PROGRESS ci-dessus.
 - **Scoring importé tel quel** : normalisation globale par côté, comparaison ordonnée,
   `DISTANCE_TO_SCORE_FACTOR = 2.2`, verdict ≥ 60. Ne pas revenir à une normalisation
-  par trait. Ne pas descendre sous 2.0.
+  par trait. Ne pas descendre sous 2.0. **Non touché lors de la session mobs/terrain**.
 - **Un seul popup à la fois** : `_active_popup` dans `skill_bar.gd` refuse un 2e dessin
   si un est déjà ouvert.
 - **Mort pendant le dessin** : `PlayerStats.player_died` → popup fermé comme un
@@ -146,11 +179,26 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 - **`--check-only --script skill_bar.gd` seul échoue** : `TargetSystem`/`PlayerStats`
   sont des autoloads, non résolus hors contexte de jeu (faux positif). Vérifier via
   lancement headless du jeu, ou via un autoload temporaire.
+- **Terrain — noise-based per-tile color** (choix de session) : grille de tuiles
+  hexagonales, chaque tuile = 1 `StandardMaterial3D` coloré par `FastNoiseLite`.
+  Pour un rendu "zones naturelles" (pas un dégradé continu), préférer des paliers
+  de couleurs (roche/terre/herbe) plutôt qu'un `lerp` lisse sur tout l'intervalle.
+  Ajuster `noise_frequency`/`noise_seed`/`hex_size` (exports) si besoin.
+- **Mobs — un seul template paramétré** (choix de session) : `mob.gd` construit le
+  modèle en primitives selon `mob_type`. Ajouter un type = ajouter un `_build_*` +
+  une entrée enum + le placement dans `main.tscn`. Pas de 7 scènes séparées.
 - TODO Phase 1 laissé en commentaire : XP finale = produit précision × vitesse du
   combat (score moyen des kanji utilisés).
 
 ## 🔗 Dépendances / éléments externes
 - Godot 4.7.1 : `C:\Program Files (x86)\Godot\Godot_v4.7.1-stable_win64_console.exe`.
+- **Terminal Windows — affichage des kanji en console** (investigué le 21/08) :
+  les caractères japonais sortent en échappement/s’affichent mal parce que le
+  terminal Windows est en codepage **850 (DOS Western European)** au lieu de
+  l’UTF-8. C’est un réglage d’environnement, pas un bug des scripts (les
+  `print()` du projet sortent bien de l’UTF-8 — vérifié). Avant toute session :
+  lancer `chcp 65001` (et `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8`
+  dans PowerShell) pour que 水/火/土/風/etc. s’affichent correctement.
 - Push GitHub : `$env:GCM_INTERACTIVE="Never"; git -c credential.username=yurisshop63 push origin main`
   (crédentials Windows — sinon push bloqué).
 - Création du repo (gh non installé) :
@@ -162,13 +210,13 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 ## 🧭 Pour reprendre cette session
 Projet Godot dans `jeu-mmorpg-japanese-learning-ARCHIVE/` (le dossier EST le projet).
 Tester : lancer la scène `main.tscn` headless (`--headless --path . --quit-after 5`) —
-pas d'erreur attendue au démarrage. Le scoring se vérifie via
-`StrokeScoring.run_auto_test()` (attendu : parfait 100, aléatoire ~0-15, humain
+pas d'erreur attendue au démarrage (terrain + 21 mobs + joueur). Le scoring se vérifie
+via `StrokeScoring.run_auto_test()` (attendu : parfait 100, aléatoire ~0-15, humain
 imprécis 65-85). Compiler un script avec `--check-only --script <fichier.gd>`
 (piège : échoue sur les autoloads hors contexte de jeu). Pour tester le popup :
-instancier `res://kanji/kanji_draw_popup.tscn` puis `open()`. Pour tester la
-formule combinée en contexte réel : ajouter un autoload temporaire qui appelle
-`SkillBar._compute_damage(score, elapsed_ms, par_time_ms)`, puis le retirer.
+instancier `res://kanji/kanji_draw_popup.tscn` puis `open()`. Pour tester les mobs :
+instancier `mob.tscn`, régler `mob_type`, appeler `take_damage()`. Pour la console :
+lancer `chcp 65001` avant (sinon kanji mal affichés, codepage 850).
 
 ---
 

@@ -1,47 +1,107 @@
 extends Node3D
 
-@export var radius: float = 50.0          # Tu as mis 50 pour tester, c’est parfait
+@export var radius: float = 50.0          # Rayon total du terrain (hexagone)
 @export var wall_height: float = 20.0
 @export var wall_thickness: float = 3.0
-@export var material_color: Color = Color(0.35, 0.55, 0.25)
+@export var hex_size: float = 5.0         # Taille d'un petit hexagone du sol
+@export var noise_frequency: float = 0.04
+@export var noise_seed: int = 1337
+
+# Palette du sol (interpolée selon le bruit) : roche / terre brune / herbe.
+const COLOR_ROCK := Color(0.52, 0.48, 0.42)
+const COLOR_EARTH := Color(0.47, 0.37, 0.22)
+const COLOR_GRASS := Color(0.3, 0.52, 0.25)
+
+var _noise: FastNoiseLite
 
 func _ready():
+	_noise = FastNoiseLite.new()
+	_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	_noise.fractal_type = FastNoiseLite.FRACTAL_FBM
+	_noise.fractal_octaves = 3
+	_noise.frequency = noise_frequency
+	_noise.seed = noise_seed
 	create_hex_map()
 
 func create_hex_map():
 	# -------------------------------------------------
-	# 1. SOL VISUEL (hexagone plat)
+	# 1. SOL VISUEL (grille de petits hexagones colorés par le bruit)
 	# -------------------------------------------------
-	var mesh_instance = MeshInstance3D.new()
-	add_child(mesh_instance)
-
-	var st = SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-
-	var verts = []
-	for i in range(6):
-		var angle = i * TAU / 6.0
-		verts.append(Vector3(cos(angle) * radius, 0.0, sin(angle) * radius))
-
-	var center = Vector3.ZERO
-
-	for i in range(6):
-		var next = (i + 1) % 6
-		st.add_vertex(center)
-		st.add_vertex(verts[i])
-		st.add_vertex(verts[next])
-
-	st.generate_normals()
-	mesh_instance.mesh = st.commit()
-
-	var mat = StandardMaterial3D.new()
-	mat.albedo_color = material_color
-	mat.roughness = 0.9
-	mesh_instance.material_override = mat
+	_create_hex_tiles()
 
 	# -------------------------------------------------
 	# 2. COLLISION DU SOL (très fiable)
 	# -------------------------------------------------
+	_create_floor_collision()
+
+	# -------------------------------------------------
+	# 3. 6 MURS SOLIDES
+	# -------------------------------------------------
+	_create_walls()
+
+# Grille hexagonale de petits hexagones couvrant le disque de rayon `radius`.
+# Chaque hexagone reçoit une couleur dérivée du bruit FastNoiseLite (position
+# du centre) interpolée entre roche / terre / herbe → aspect naturel, sans
+# texture externe. C'est le choix "noise-based vertex/tile color" : le plus
+# simple à intégrer dans le code existant (une boucle par tuile, un matériau
+# StandardMaterial3D par tuile).
+func _create_hex_tiles():
+	var hex_h := hex_size                     # distance centre→sommet
+	var step_x := sqrt(3.0) * hex_h           # espacement horizontal
+	var step_z := 1.5 * hex_h                 # espacement vertical
+	var rows := int(ceil(radius / step_z)) + 2
+	var cols := int(ceil(radius / step_x)) + 2
+
+	for r in range(-rows, rows + 1):
+		for q in range(-cols, cols + 1):
+			var z := r * step_z
+			var x := q * step_x
+			if r % 2 != 0:
+				x += step_x * 0.5
+			if Vector2(x, z).length() > radius:
+				continue
+			_create_hex_tile(Vector2(x, z))
+
+func _create_hex_tile(center: Vector2):
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+
+	# Hexagone "pointy-top" : sommet à angle 30°+60°*i
+	for i in range(6):
+		var angle = deg_to_rad(30.0 + 60.0 * i)
+		var px = cos(angle) * hex_size
+		var pz = sin(angle) * hex_size
+		st.add_vertex(Vector3(center.x, 0.0, center.y))
+		st.add_vertex(Vector3(center.x + px, 0.0, center.y + pz))
+		var angle2 = deg_to_rad(30.0 + 60.0 * ((i + 1) % 6))
+		var qx = cos(angle2) * hex_size
+		var qz = sin(angle2) * hex_size
+		st.add_vertex(Vector3(center.x + qx, 0.0, center.y + qz))
+
+	st.generate_normals()
+
+	var mesh_instance = MeshInstance3D.new()
+	add_child(mesh_instance)
+	mesh_instance.mesh = st.commit()
+
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = _color_at(center)
+	mat.roughness = 0.9
+	mesh_instance.material_override = mat
+
+# Couleur du sol à une position : bruit [-1,1] → mélange roche/terre/herbe.
+func _color_at(pos: Vector2) -> Color:
+	var n := _noise.get_noise_2d(pos.x, pos.y)  # -1..1
+	# n < -0.25 → roche ; -0.25..0.15 → terre ; > 0.15 → herbe
+	var t := clampf((n + 1.0) * 0.5, 0.0, 1.0)
+	if t < 0.35:
+		return COLOR_ROCK.lerp(COLOR_EARTH, t / 0.35)
+	elif t < 0.6:
+		return COLOR_EARTH.lerp(COLOR_GRASS, (t - 0.35) / 0.25)
+	else:
+		return COLOR_GRASS.lerp(COLOR_ROCK.lerp(COLOR_GRASS, 0.5), (t - 0.6) / 0.4)
+
+func _create_floor_collision():
 	var floor_body = StaticBody3D.new()
 	add_child(floor_body)
 
@@ -53,9 +113,7 @@ func create_hex_map():
 	floor_col.shape = floor_shape
 	floor_body.position.y = -0.5   # le dessus du sol est à Y = 0
 
-	# -------------------------------------------------
-	# 3. 6 MURS SOLIDES (inspirés de la méthode CSG)
-	# -------------------------------------------------
+func _create_walls():
 	for i in range(6):
 		var angle1 = i * TAU / 6.0
 		var angle2 = (i + 1) * TAU / 6.0

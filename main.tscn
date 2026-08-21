@@ -46,7 +46,6 @@ script = ExtResource("1_main")
 
 [node name="HexGround" type="Node3D" parent="." unique_id=350043936]
 script = ExtResource("2_272bh")
-material_color = Color(0, 1, 1, 1)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1946045742]
 transform = Transform3D(0.8660254, 0.35355338, -0.35355338, 0, 0.70710677, 0.70710677, 0.5, -0.6123724, 0.6123724, 0, 5, 0)
@@ -103,8 +102,89 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
 [node name="Camera3D" type="Camera3D" parent="Player/CameraPivot" unique_id=1549459141]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 5)
 
-[node name="Mob" parent="." unique_id=1369254688 instance=ExtResource("3_mob")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 40)
+[node name="MobFeu1" parent="." unique_id=1000000001 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 1, 0)
+mob_type = 0
+
+[node name="MobEau1" parent="." unique_id=1000000002 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 1, 14.1)
+mob_type = 1
+
+[node name="MobTerre1" parent="." unique_id=1000000003 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 1, 17.6)
+mob_type = 2
+
+[node name="MobLune1" parent="." unique_id=1000000004 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.2, 1, 7.8)
+mob_type = 3
+
+[node name="MobBois1" parent="." unique_id=1000000005 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.2, 1, -7.8)
+mob_type = 4
+
+[node name="MobOr1" parent="." unique_id=1000000006 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 1, -17.6)
+mob_type = 5
+
+[node name="MobSoleil1" parent="." unique_id=1000000007 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 1, -14.1)
+mob_type = 6
+
+[node name="MobFeu2" parent="." unique_id=1000000008 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27, 1, 13)
+mob_type = 0
+
+[node name="MobEau2" parent="." unique_id=1000000009 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.7, 1, 29.2)
+mob_type = 1
+
+[node name="MobTerre2" parent="." unique_id=1000000010 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.7, 1, 23.5)
+mob_type = 2
+
+[node name="MobLune2" parent="." unique_id=1000000011 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 1, 0)
+mob_type = 3
+
+[node name="MobBois2" parent="." unique_id=1000000012 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.7, 1, -23.5)
+mob_type = 4
+
+[node name="MobOr2" parent="." unique_id=1000000013 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.7, 1, -29.2)
+mob_type = 5
+
+[node name="MobSoleil2" parent="." unique_id=1000000014 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27, 1, -13)
+mob_type = 6
+
+[node name="MobFeu3" parent="." unique_id=1000000015 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 1, 0)
+mob_type = 0
+
+[node name="MobEau3" parent="." unique_id=1000000016 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.2, 1, 32.8)
+mob_type = 1
+
+[node name="MobTerre3" parent="." unique_id=1000000017 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.3, 1, 41)
+mob_type = 2
+
+[node name="MobLune3" parent="." unique_id=1000000018 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -37.9, 1, 18.1)
+mob_type = 3
+
+[node name="MobBois3" parent="." unique_id=1000000019 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -37.9, 1, -18.1)
+mob_type = 4
+
+[node name="MobOr3" parent="." unique_id=1000000020 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.3, 1, -41)
+mob_type = 5
+
+[node name="MobSoleil3" parent="." unique_id=1000000021 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.2, 1, -32.8)
+mob_type = 6
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1230186980]
 script = SubResource("GDScript_kek77")
@@ -189,7 +269,6 @@ offset_top = 20.0
 offset_bottom = 20.0
 
 [node name="TopRightMenu" type="Control" parent="UI" unique_id=1463695902]
-visible = false
 layout_mode = 3
 anchors_preset = 1
 anchor_left = 1.0
