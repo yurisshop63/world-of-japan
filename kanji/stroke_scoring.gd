@@ -60,15 +60,26 @@ static func run_auto_test() -> void:
 	run_auto_test_for("res://kanji/kanji_data/06c34.svg", "水")
 
 
-# Version étendue : boucle sur les 4 kanji disponibles (水, 土, 火, 風) pour
-# valider que le scoring généralise au-delà du cas unique. Pour chaque kanji :
-# tracé parfait → proche de 100 ; tracé aléatoire → proche de 0.
+# Version étendue : boucle sur TOUS les kanji de la base (4 + 10 ajoutés lors
+# de la session "écran de dessin") pour valider que le scoring généralise.
+# Pour chaque kanji : tracé parfait → proche de 100 ; tracé aléatoire → faible ;
+# tracé "humain imprécis" → ~65-89.
 static func run_auto_test_all() -> void:
 	var kanjis := [
 		["res://kanji/kanji_data/06c34.svg", "水"],
 		["res://kanji/kanji_data/0571f.svg", "土"],
 		["res://kanji/kanji_data/0706b.svg", "火"],
 		["res://kanji/kanji_data/098a8.svg", "風"],
+		["res://kanji/kanji_data/06728.svg", "木"],
+		["res://kanji/kanji_data/091d1.svg", "金"],
+		["res://kanji/kanji_data/06708.svg", "月"],
+		["res://kanji/kanji_data/065e5.svg", "日"],
+		["res://kanji/kanji_data/05c71.svg", "山"],
+		["res://kanji/kanji_data/05ddd.svg", "川"],
+		["res://kanji/kanji_data/096f7.svg", "雷"],
+		["res://kanji/kanji_data/096e8.svg", "雨"],
+		["res://kanji/kanji_data/068ee.svg", "森"],
+		["res://kanji/kanji_data/082b1.svg", "花"],
 	]
 	for k in kanjis:
 		run_auto_test_for(k[0], k[1])

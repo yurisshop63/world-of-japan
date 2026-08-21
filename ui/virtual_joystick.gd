@@ -19,6 +19,11 @@ extends Control
 const RADIUS_BASE := 60.0
 const RADIUS_STICK := 32.0
 const MAX_OFFSET := 36.0
+# Zone morte du stick (fraction de MAX_OFFSET) : tant que le doigt/curseur
+# reste dans cette zone autour du centre, move_vector reste à ZERO (évite
+# qu'un tremblement ou un résidu de position au relâchement fasse dériver
+# le déplacement). 12% ≈ 4.3 px sur MAX_OFFSET=36.
+const DEAD_ZONE := 0.12
 
 const BUTTON_SIZE := 52.0
 const BUTTON_GAP := 14.0
@@ -195,17 +200,26 @@ func _end_press() -> void:
 
 	if _is_dragging:
 		_is_dragging = false
+		# Le drag a fini : le stick revient au centre, l'input est coupé.
+		_reset_stick()
 		_on_drag_end()
 	else:
-		_stick_offset = Vector2.ZERO
-		_update_stick(_stick_offset)
+		_reset_stick()
+
+
+## Remet le stick au centre exact de sa base et coupe l'input : offset visuel
+## = centre, move_vector = ZERO, active = false. Sans délai ni interpolation.
+func _reset_stick() -> void:
+	_stick_offset = _center()
+	MobileInput.move_vector = Vector2.ZERO
+	MobileInput.active = false
+	queue_redraw()
 
 
 func _on_long_press_timeout() -> void:
 	if _is_touching and not _is_dragging:
 		_is_dragging = true
-		_stick_offset = Vector2.ZERO
-		_update_stick(_stick_offset)
+		_reset_stick()
 		modulate.a = 0.85
 
 
@@ -213,20 +227,31 @@ func _on_long_press_timeout() -> void:
 # Stick : dessin + vector normalisé
 # -------------------------------------------------
 
+## Centre de la base du stick dans les coordonnées locales du Control.
+func _center() -> Vector2:
+	return Vector2(RADIUS_BASE, HEIGHT / 2.0)
+
+
 func _update_stick(local_pos: Vector2) -> void:
-	var center := Vector2(RADIUS_BASE, HEIGHT / 2.0)
+	var center := _center()
 	var delta := local_pos - center
 	if delta.length() > MAX_OFFSET:
 		delta = delta.normalized() * MAX_OFFSET
 	_stick_offset = center + delta
 
-	MobileInput.move_vector = delta / MAX_OFFSET
+	# Zone morte : tant que le doigt reste dans un rayon ~12% de MAX_OFFSET
+	# autour du centre, move_vector reste à ZERO. Le stick visuel peut bouger,
+	# mais l'input ne dérive pas (anti-tremblement / anti-résidu).
+	if delta.length() <= MAX_OFFSET * DEAD_ZONE:
+		MobileInput.move_vector = Vector2.ZERO
+	else:
+		MobileInput.move_vector = delta / MAX_OFFSET
 	MobileInput.active = _is_touching
 	queue_redraw()
 
 
 func _draw() -> void:
-	var center := Vector2(RADIUS_BASE, HEIGHT / 2.0)
+	var center := _center()
 
 	# Base : cercle fixe semi-transparent
 	draw_circle(center, RADIUS_BASE, Color(1, 1, 1, 0.12))

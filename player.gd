@@ -62,8 +62,10 @@ func _physics_process(delta):
 
 	# Input mobile (joystick virtuel) — combiné au clavier, pas de remplacement.
 	# MobileInput.move_vector est en repère écran : x = droite (+), y = bas (+).
+	# Garde double sécurité : on n'utilise l'input mobile que s'il est actif
+	# (MobileInput.active == true) — jamais de résidu après relâchement.
 	var mv := MobileInput.move_vector
-	if mv.length() > 0.01:
+	if MobileInput.active and mv.length() > 0.01:
 		input_dir.x += mv.x
 		input_dir.z += mv.y
 		if mv.y < -0.5:

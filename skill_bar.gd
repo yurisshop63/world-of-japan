@@ -9,14 +9,27 @@ const MELEE_RANGE = 3.0
 const DEFAULT_KANJI_SVG := "res://kanji/kanji_data/06c34.svg"
 # Temps "parfait" par défaut pour dessiner le kanji (ms) — voir kanji_draw_popup.
 const DEFAULT_PAR_TIME_MS := 3000
-# Les 4 kanji disponibles (Alpha). Chaque skill référence le sien via sa fiche :
+# Kanji disponibles (base étendue session "écran de dessin" : 4 + 10 KanjiVG).
+# Chaque skill référence le sien via sa fiche :
 # {"name", "kanji", "par_time_ms"}. Le par_time_ms est le temps "parfait" pour
-# dessiner ce kanji — plus le kanji est complexe (nb de traits), plus il est long.
+# dessiner ce kanji — plus le kanji est complexe (nb de traits), plus il est
+# long. Extrapolation depuis 水=4 traits→3000, 土=3→2000, 火=4→2800, 風=9→5500
+# (~base 700 + ~500-550 ms/trait).
 const KANJI_DATA := {
 	"mizu": {"name": "Frappe Eau", "kanji": "res://kanji/kanji_data/06c34.svg", "par_time_ms": 3000},
 	"tsuchi": {"name": "Frappe Terre", "kanji": "res://kanji/kanji_data/0571f.svg", "par_time_ms": 2000},
 	"hi": {"name": "Frappe Feu", "kanji": "res://kanji/kanji_data/0706b.svg", "par_time_ms": 2800},
 	"kaze": {"name": "Frappe Vent", "kanji": "res://kanji/kanji_data/098a8.svg", "par_time_ms": 5500},
+	"ki": {"name": "Frappe Bois", "kanji": "res://kanji/kanji_data/06728.svg", "par_time_ms": 2800},
+	"kin": {"name": "Frappe Or", "kanji": "res://kanji/kanji_data/091d1.svg", "par_time_ms": 5000},
+	"tsuki": {"name": "Frappe Lune", "kanji": "res://kanji/kanji_data/06708.svg", "par_time_ms": 2800},
+	"nichi": {"name": "Frappe Soleil", "kanji": "res://kanji/kanji_data/065e5.svg", "par_time_ms": 2800},
+	"yama": {"name": "Frappe Montagne", "kanji": "res://kanji/kanji_data/05c71.svg", "par_time_ms": 2000},
+	"kawa": {"name": "Frappe Rivière", "kanji": "res://kanji/kanji_data/05ddd.svg", "par_time_ms": 2000},
+	"kaminari": {"name": "Frappe Tonnerre", "kanji": "res://kanji/kanji_data/096f7.svg", "par_time_ms": 8000},
+	"ame": {"name": "Frappe Pluie", "kanji": "res://kanji/kanji_data/096e8.svg", "par_time_ms": 5000},
+	"mori": {"name": "Frappe Forêt", "kanji": "res://kanji/kanji_data/068ee.svg", "par_time_ms": 7200},
+	"hana": {"name": "Frappe Fleur", "kanji": "res://kanji/kanji_data/082b1.svg", "par_time_ms": 4300},
 }
 
 var _active_popup = null
@@ -62,17 +75,43 @@ func use_slot(slot_index):
 	_open_kanji_draw(skill)
 
 func _open_kanji_draw(skill):
-	var kanji_path = skill.get("kanji", DEFAULT_KANJI_SVG)
-	var par_time_ms = skill.get("par_time_ms", DEFAULT_PAR_TIME_MS)
+	var candidates := _build_candidates(skill)
 	var popup_scene = preload("res://kanji/kanji_draw_popup.tscn")
 	_active_popup = popup_scene.instantiate()
 	get_tree().get_root().add_child(_active_popup)
-	_active_popup.par_time_ms = par_time_ms
+	_active_popup.par_time_ms = skill.get("par_time_ms", DEFAULT_PAR_TIME_MS)
 	_active_popup.drawing_validated.connect(_on_drawing_validated)
 	_active_popup.drawing_cancelled.connect(_on_drawing_cancelled)
 	# Temps réel : le monde ne se met PAS en pause. Le mob continue d'attaquer,
 	# la vitesse de dessin devient un second facteur de score.
-	_active_popup.open(kanji_path)
+	_active_popup.open(candidates)
+
+## Construit la liste des 3 références proposées au joueur : le kanji du skill
+## déclenché en premier + 2 autres kanji tirés au hasard dans la base étendue.
+## Chaque candidat : {"svg", "par_time_ms", "name"}. Le joueur choisit lequel
+## il dessine (le popup score contre le kanji sélectionné, pas un kanji fixe).
+## TODO (ROADMAP point 2) : affiner la pertinence "élémentaire" (ex: proposer
+## en priorité des kanji du même élément que le skill déclenché).
+func _build_candidates(skill) -> Array:
+	var candidates := [{
+		"svg": skill.get("kanji", DEFAULT_KANJI_SVG),
+		"par_time_ms": skill.get("par_time_ms", DEFAULT_PAR_TIME_MS),
+		"name": skill.get("name", "?"),
+	}]
+	var pool := []
+	for key in KANJI_DATA:
+		var other = KANJI_DATA[key]
+		if other["kanji"] != candidates[0]["svg"]:
+			pool.append(other)
+	pool.shuffle()
+	var wanted := mini(2, pool.size())
+	for i in range(wanted):
+		candidates.append({
+			"svg": pool[i]["kanji"],
+			"par_time_ms": pool[i]["par_time_ms"],
+			"name": pool[i]["name"],
+		})
+	return candidates
 
 func _on_drawing_validated(score, elapsed_ms):
 	var target = _pending_target
