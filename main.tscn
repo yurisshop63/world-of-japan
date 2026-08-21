@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://1lj121lu0b4n" path="res://GridOverlay.gd" id="9_kek77"]
 [ext_resource type="Script" uid="uid://dngx1ayw0tab6" path="res://menu_root_button.gd" id="10_4c57u"]
 [ext_resource type="Script" uid="uid://cso4uo2guamc1" path="res://top_right_menu.gd" id="11_topmenu"]
+[ext_resource type="PackedScene" path="res://ui/virtual_joystick.tscn" id="12_joy"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.3
@@ -308,3 +309,5 @@ script = ExtResource("9_kek77")
 offset_right = 8.0
 offset_bottom = 8.0
 script = ExtResource("10_4c57u")
+
+[node name="VirtualJoystick" parent="UI" unique_id=1000000100 instance=ExtResource("12_joy")]

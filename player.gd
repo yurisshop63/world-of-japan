@@ -60,6 +60,15 @@ func _physics_process(delta):
 	if Input.is_key_pressed(KEY_Z):
 		input_dir.x += 1
 
+	# Input mobile (joystick virtuel) — combiné au clavier, pas de remplacement.
+	# MobileInput.move_vector est en repère écran : x = droite (+), y = bas (+).
+	var mv := MobileInput.move_vector
+	if mv.length() > 0.01:
+		input_dir.x += mv.x
+		input_dir.z += mv.y
+		if mv.y < -0.5:
+			going_forward = true
+
 	var is_moving = input_dir.length() > 0.01
 	input_dir = input_dir.normalized()
 
