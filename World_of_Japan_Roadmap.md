@@ -289,12 +289,12 @@ d'investir dans le contenu à l'échelle.
 ---
 
 ## Phase 0 — Fusion technique (prochaine étape immédiate)
-- [ ] Décider du dépôt hôte GitHub (fusion en un seul repo)
-- [ ] Importer `stroke_scoring.gd`, `svg_parser.gd`, `kanji_data/` dans le
+- [x] Décider du dépôt hôte GitHub (fusion en un seul repo)
+- [x] Importer `stroke_scoring.gd`, `svg_parser.gd`, `kanji_data/` dans le
       projet mmorpg (sous `res://kanji/`)
-- [ ] Créer une scène popup `KanjiDraw` réutilisable (généraliser
+- [x] Créer une scène popup `KanjiDraw` réutilisable (généraliser
       `test_trace.gd`, qui est aujourd'hui figé sur 水)
-- [ ] Brancher `SkillBar.use_slot()` : au lieu de dégâts fixes aléatoires,
+- [x] Brancher `SkillBar.use_slot()` : au lieu de dégâts fixes aléatoires,
       ouvrir le popup kanji, récupérer le score, en déduire dégâts/vitesse/XP
 - [ ] Ajouter 2-3 kanji supplémentaires (SVG + effet associé) pour sortir du
       cas unique et valider que le système généralise

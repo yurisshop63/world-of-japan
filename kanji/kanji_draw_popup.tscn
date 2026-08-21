@@ -1,0 +1,88 @@
+[gd_scene load_steps=2 format=3 uid="uid://b5vwdw0jp4x3a"]
+
+[ext_resource type="Script" path="res://kanji/kanji_draw_popup.gd" id="1_popup"]
+
+[node name="KanjiDrawPopup" type="CanvasLayer"]
+process_mode = 2
+layer = 10
+visible = false
+script = ExtResource("1_popup")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0, 0, 0, 0.45)
+
+[node name="CenterPanel" type="Panel" parent="Backdrop"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -350.0
+offset_top = -270.0
+offset_right = 350.0
+offset_bottom = 270.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ReferenceTitle" type="Label" parent="Backdrop/CenterPanel"]
+offset_left = 20.0
+offset_top = 10.0
+offset_right = 180.0
+offset_bottom = 34.0
+text = "Référence :"
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+
+[node name="ReferencePanel" type="Panel" parent="Backdrop/CenterPanel"]
+offset_left = 20.0
+offset_top = 40.0
+offset_right = 170.0
+offset_bottom = 190.0
+mouse_filter = 2
+
+[node name="ReferenceContainer" type="Node2D" parent="Backdrop/CenterPanel/ReferencePanel"]
+
+[node name="DrawBackground" type="Panel" parent="Backdrop/CenterPanel"]
+offset_left = 200.0
+offset_top = 20.0
+offset_right = 600.0
+offset_bottom = 420.0
+mouse_filter = 0
+
+[node name="DrawingContainer" type="Node2D" parent="Backdrop/CenterPanel/DrawBackground"]
+
+[node name="ResultLabel" type="Label" parent="Backdrop/CenterPanel"]
+offset_left = 200.0
+offset_top = 430.0
+offset_right = 600.0
+offset_bottom = 460.0
+text = "Dessine le kanji puis clique sur Valider."
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+
+[node name="ValidateButton" type="Button" parent="Backdrop/CenterPanel"]
+offset_left = 220.0
+offset_top = 470.0
+offset_right = 340.0
+offset_bottom = 510.0
+text = "Valider"
+
+[node name="ClearButton" type="Button" parent="Backdrop/CenterPanel"]
+offset_left = 360.0
+offset_top = 470.0
+offset_right = 460.0
+offset_bottom = 510.0
+text = "Effacer"
+
+[node name="CancelButton" type="Button" parent="Backdrop/CenterPanel"]
+offset_left = 470.0
+offset_top = 470.0
+offset_right = 560.0
+offset_bottom = 510.0
+text = "Annuler"
