@@ -1,21 +1,28 @@
 extends CanvasLayer
 # -----------------------------------------------------------------------------
-# KanjiDrawPopup — Popup de dessin de kanji réutilisable.
+# KanjiDrawPopup — Popup de dessin de kanji réutilisable (temps réel).
 # S'affiche en overlay par-dessus la scène 3D (CanvasLayer layer élevé) sans
-# bloquer le rendu derrière. Fonctionne pendant la pause du monde
-# (process_mode = WHEN_PAUSED) : la scène 3D est figée mais reste visible.
+# bloquer le rendu derrière. Le monde ne se met PAS en pause : le mob continue
+# d'attaquer pendant que le joueur dessine. La vitesse de réalisation devient
+# donc un second paramètre de score, en plus de la précision.
 #
 # Paramètre : kanji_svg_path (chemin du SVG de référence, passé via open()).
+# par_time_ms : temps "parfait" (en ms) pour dessiner le kanji — sert au calcul
+# du multiplicateur de vitesse côté combat. Facilement ajustable par kanji.
+#
 # Signaux :
-#   - drawing_validated(score) émis quand le joueur valide un tracé
+#   - drawing_validated(score, elapsed_ms) émis quand le joueur valide un tracé
 #   - drawing_cancelled() émis si le joueur ferme sans valider
 #
 # Le parsing SVG est délégué à SvgParser et le calcul du score à StrokeScoring
 # (modules importés du repo kanji-game).
 # -----------------------------------------------------------------------------
 
-signal drawing_validated(score: int)
+signal drawing_validated(score: int, elapsed_ms: int)
 signal drawing_cancelled
+
+# Temps "parfait" pour dessiner le kanji (ms). Pour l'instant 水 : 3000 ms.
+@export var par_time_ms: int = 3000
 
 @export var kanji_svg_path: String = "res://kanji/kanji_data/06c34.svg"
 
@@ -24,6 +31,7 @@ signal drawing_cancelled
 @onready var drawing_container: Node2D = $Backdrop/CenterPanel/DrawBackground/DrawingContainer
 @onready var reference_container: Node2D = $Backdrop/CenterPanel/ReferencePanel/ReferenceContainer
 @onready var result_label: Label = $Backdrop/CenterPanel/ResultLabel
+@onready var timer_label: Label = $Backdrop/CenterPanel/TimerLabel
 @onready var validate_button: Button = $Backdrop/CenterPanel/ValidateButton
 @onready var clear_button: Button = $Backdrop/CenterPanel/ClearButton
 @onready var cancel_button: Button = $Backdrop/CenterPanel/CancelButton
@@ -33,6 +41,22 @@ var player_strokes: Array = []
 var current_stroke: PackedVector2Array = PackedVector2Array()
 var current_line: Line2D = null
 var drawing: bool = false
+
+# Chrono du dessin en cours (Time.get_ticks_msec() au moment de open()).
+var _open_time_ms: int = 0
+
+# Mode souris mémorisé avant l'ouverture (restauré à la fermeture).
+var _previous_mouse_mode: int = Input.MOUSE_MODE_VISIBLE
+var _mouse_switched_to_visible: bool = false
+
+# Couleurs / rendu (contraste lisible : fond clair, tracé sombre).
+const DRAW_BG_COLOR := Color(0.941, 0.941, 0.941)   # #F0F0F0
+const PLAYER_STROKE_COLOR := Color(0.08, 0.08, 0.15) # quasi noir
+const PLAYER_STROKE_WIDTH := 5.0
+const REF_STROKE_COLOR := Color(0.9, 0.6, 0.15)      # orange clair (guide)
+const REF_STROKE_WIDTH := 3.0
+const REF_DASH_LEN := 8.0
+const REF_DASH_GAP := 5.0
 
 
 func _ready() -> void:
@@ -45,18 +69,46 @@ func _ready() -> void:
 
 
 # Ouvre le popup pour un kanji donné (efface le tracé précédent puis redessine
-# la référence). Le monde reste en pause tant que le popup est ouvert.
+# la référence). Démarre le chrono et libère la souris pour dessiner.
 func open(svg_path: String) -> void:
 	kanji_svg_path = svg_path
 	_clear_drawing()
 	_draw_reference()
 	result_label.text = "Dessine le kanji puis clique sur Valider."
+	_open_time_ms = Time.get_ticks_msec()
+	_previous_mouse_mode = Input.get_mouse_mode()
+	if _previous_mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		_mouse_switched_to_visible = true
 	visible = true
 
 
-# Ferme le popup (le monde est dé-pausé par l'appelant via les signaux).
+# Ferme le popup et restaure le mode souris précédent (validé, annulé ou mort).
 func close() -> void:
 	visible = false
+	_restore_mouse_mode()
+
+
+# Restaure aussi la souris en cas de fermeture forcée (queue_free sans close()).
+func _exit_tree() -> void:
+	_restore_mouse_mode()
+
+
+func _restore_mouse_mode() -> void:
+	if _mouse_switched_to_visible:
+		Input.set_mouse_mode(_previous_mouse_mode)
+		_mouse_switched_to_visible = false
+
+
+# ---------------------------------------------------------------------------
+# Chrono affiché pendant le dessin (pression temps réel)
+# ---------------------------------------------------------------------------
+
+func _process(_delta: float) -> void:
+	if not visible:
+		return
+	var elapsed_ms := Time.get_ticks_msec() - _open_time_ms
+	timer_label.text = "Temps : %.1fs" % (float(elapsed_ms) / 1000.0)
 
 
 # ---------------------------------------------------------------------------
@@ -78,8 +130,8 @@ func _start_stroke(pos: Vector2) -> void:
 	drawing = true
 	current_stroke = PackedVector2Array([pos])
 	current_line = Line2D.new()
-	current_line.width = 8.0
-	current_line.default_color = Color(0.1, 0.1, 0.2)
+	current_line.width = PLAYER_STROKE_WIDTH
+	current_line.default_color = PLAYER_STROKE_COLOR
 	current_line.joint_mode = Line2D.LINE_JOINT_ROUND
 	current_line.begin_cap_mode = Line2D.LINE_CAP_ROUND
 	current_line.end_cap_mode = Line2D.LINE_CAP_ROUND
@@ -121,6 +173,8 @@ func _on_clear_pressed() -> void:
 # ---------------------------------------------------------------------------
 
 # Dessine le kanji de référence dans le panneau de gauche à partir du SVG.
+# Le tracé est en pointillés orange clair : visuellement distinct du tracé
+# joueur (noir), on comprend que c'est un guide, pas un dessin à imiter.
 func _draw_reference() -> void:
 	for child in reference_container.get_children():
 		child.queue_free()
@@ -131,15 +185,55 @@ func _draw_reference() -> void:
 	var ref_scale := 130.0 / 109.0
 	var offset := Vector2(10.0, 10.0)
 	for i in range(ref_strokes.size()):
-		var line := Line2D.new()
+		var pts := PackedVector2Array()
 		for p in ref_strokes[i]:
-			line.add_point(p * ref_scale + offset)
-		line.width = 5.0
-		line.default_color = Color(0.2, 0.4, 0.9)
-		line.joint_mode = Line2D.LINE_JOINT_ROUND
-		line.begin_cap_mode = Line2D.LINE_CAP_ROUND
-		line.end_cap_mode = Line2D.LINE_CAP_ROUND
-		reference_container.add_child(line)
+			pts.append(p * ref_scale + offset)
+		_add_dashed_line(pts)
+
+
+# Ajoute un trait de référence en pointillés (tirets + trous réguliers).
+func _add_dashed_line(points: PackedVector2Array) -> void:
+	if points.size() < 2:
+		return
+	var cycle := REF_DASH_LEN + REF_DASH_GAP
+	var line := _new_dash_line()
+	line.add_point(points[0])
+	var traveled := 0.0
+	var drawing_dash := true
+	for i in range(1, points.size()):
+		var prev := points[i - 1]
+		var curr := points[i]
+		var seg_len := prev.distance_to(curr)
+		var seg_pos := 0.0
+		while seg_pos < seg_len:
+			var phase := fposmod(traveled, cycle)
+			var remaining_in_state := (REF_DASH_LEN if drawing_dash else REF_DASH_GAP) - phase
+			var remaining_in_seg := seg_len - seg_pos
+			var step: float = min(remaining_in_state, remaining_in_seg)
+			if step <= 0.0:
+				break
+			var from := prev.lerp(curr, seg_pos / seg_len)
+			var to := prev.lerp(curr, (seg_pos + step) / seg_len)
+			seg_pos += step
+			traveled += step
+			if drawing_dash:
+				line.add_point(to)
+			if phase + step >= (REF_DASH_LEN if drawing_dash else cycle) - 0.001:
+				drawing_dash = not drawing_dash
+				if drawing_dash:
+					line = _new_dash_line()
+					line.add_point(to)
+
+
+func _new_dash_line() -> Line2D:
+	var line := Line2D.new()
+	line.width = REF_STROKE_WIDTH
+	line.default_color = REF_STROKE_COLOR
+	line.joint_mode = Line2D.LINE_JOINT_ROUND
+	line.begin_cap_mode = Line2D.LINE_CAP_ROUND
+	line.end_cap_mode = Line2D.LINE_CAP_ROUND
+	reference_container.add_child(line)
+	return line
 
 
 # ---------------------------------------------------------------------------
@@ -157,11 +251,12 @@ func _on_validate_pressed() -> void:
 		result_label.text = "Dessine d'abord le kanji avant de valider !"
 		return
 
+	var elapsed_ms := Time.get_ticks_msec() - _open_time_ms
 	var result: Dictionary = StrokeScoring.compute_score(player_strokes, ref_strokes)
 	result_label.text = "Score : %d / 100" % result.score
 	_flash_background(result.score)
 	# Le verdict de combat est décidé par l'appelant (signal), pas ici.
-	drawing_validated.emit(result.score)
+	drawing_validated.emit(result.score, elapsed_ms)
 	close()
 
 
@@ -181,35 +276,36 @@ func _unhandled_input(event: InputEvent) -> void:
 # ---------------------------------------------------------------------------
 
 # Fait brièvement changer la couleur de fond de la zone de dessin selon le
-# score, puis revient en douceur au blanc via un Tween.
+# score, puis revient en douceur à la couleur de fond claire via un Tween.
 func _flash_background(score: int) -> void:
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color.WHITE
+	sb.bg_color = DRAW_BG_COLOR
 	sb.border_width_left = 3
 	sb.border_width_top = 3
 	sb.border_width_right = 3
 	sb.border_width_bottom = 3
-	sb.border_color = Color(0, 0, 0, 1)
+	sb.border_color = Color(0.3, 0.3, 0.3, 1)
 	sb.corner_radius_top_left = 4
 	sb.corner_radius_top_right = 4
 	sb.corner_radius_bottom_right = 4
 	sb.corner_radius_bottom_left = 4
 	draw_bg.add_theme_stylebox_override("panel", sb)
 	var target := _score_color(score)
-	# Apparition rapide de la couleur, puis retour progressif au blanc
+	# Apparition rapide de la couleur, puis retour progressif au fond clair
 	var tween := create_tween()
 	tween.tween_property(sb, "bg_color", target, 0.15)
-	tween.tween_property(sb, "bg_color", Color.WHITE, 0.65)
+	tween.tween_property(sb, "bg_color", DRAW_BG_COLOR, 0.65)
 	tween.tween_callback(func() -> void:
 		draw_bg.remove_theme_stylebox_override("panel"))
 
 
 # Couleur continue entre le vert (score 100) et le rouge (score 0), en passant
-# par le jaune et l'orange, via un dégradé.
+# par le jaune et l'orange, via un dégradé. Nuances foncées pour rester
+# lisibles sur le fond clair.
 func _score_color(score: int) -> Color:
 	var g := Gradient.new()
-	g.set_color(0.0, Color(0.9, 0.1, 0.1))     # rouge
-	g.set_color(0.4, Color(1.0, 0.55, 0.1))    # orange
-	g.set_color(0.7, Color(1.0, 0.9, 0.2))     # jaune
-	g.set_color(1.0, Color(0.2, 0.8, 0.2))     # vert franc
+	g.set_color(0.0, Color(0.85, 0.1, 0.1))     # rouge
+	g.set_color(0.4, Color(0.95, 0.5, 0.08))    # orange
+	g.set_color(0.7, Color(0.9, 0.8, 0.15))     # jaune foncé
+	g.set_color(1.0, Color(0.15, 0.7, 0.15))    # vert franc
 	return g.sample(clampf(float(score) / 100.0, 0.0, 1.0))

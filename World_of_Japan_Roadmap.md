@@ -291,19 +291,21 @@ d'investir dans le contenu à l'échelle.
 ## Phase 0 — Fusion technique (prochaine étape immédiate)
 - [x] Décider du dépôt hôte GitHub (fusion en un seul repo)
 - [x] Importer `stroke_scoring.gd`, `svg_parser.gd`, `kanji_data/` dans le
-      projet mmorpg (sous `res://kanji/`)
+	  projet mmorpg (sous `res://kanji/`)
 - [x] Créer une scène popup `KanjiDraw` réutilisable (généraliser
-      `test_trace.gd`, qui est aujourd'hui figé sur 水)
+	  `test_trace.gd`, qui est aujourd'hui figé sur 水)
 - [x] Brancher `SkillBar.use_slot()` : au lieu de dégâts fixes aléatoires,
       ouvrir le popup kanji, récupérer le score, en déduire dégâts/vitesse/XP
-- [ ] Ajouter 2-3 kanji supplémentaires (SVG + effet associé) pour sortir du
-      cas unique et valider que le système généralise
+      (formule combinée précision × vitesse implémentée — voir section formule)
+- [ ] Ajouter 2-3 kanji supplémentaires (SVG + effet associé + `par_time_ms`)
+      pour sortir du cas unique et valider que le système généralise
 
 ## Phase 1 — Boucle de jeu minimale (Alpha)
 - [ ] Quête ultra simple ("élimine 5 Mob X" ou "récupère 3 items Y")
 - [ ] Loot basique (drop d'item au décès du mob, probabilité simple)
 - [ ] Inventaire minimal (liste, pas de grille sophistiquée)
-- [ ] Formule dégâts/XP liée au score kanji (voir proposition ci-dessous)
+- [ ] Formule dégâts/XP liée au score kanji — **dégâts fait** (précision × vitesse),
+      **XP restant** (précision × vitesse moyen du combat, TODO commenté)
 - [ ] Feedback de level up visible (le système de bulles existe déjà)
 
 ## Phase 2 — Test utilisateur / confort
@@ -318,18 +320,30 @@ polish… → voir `World_of_Japan_Roadmap.md` pour la vision long terme
 
 ---
 
-## 🎲 Formule proposée : score kanji → combat (à ajuster en jouant)
+## 🎲 Formule proposée : score kanji → combat (précision × vitesse, temps réel)
 
-| Score du tracé | Effet |
-|---|---|
-| < 40 | Échec : 0 dégât, pas de vitesse bonus |
-| 40–70 | Dégâts de base, pas de bonus |
-| 70–90 | Dégâts ×1.5, temps de cast −20% |
-| > 90 | Coup critique : dégâts ×2, temps de cast −40% |
+Le monde ne se met **plus** en pause pendant le dessin : le mob continue
+d'attaquer. La vitesse de réalisation devient un second facteur de score, en
+plus de la précision. Dégâts = base (2-6) × précision × vitesse, arrondi, min 1.
 
-L'XP gagnée à la mort du mob peut aussi être multipliée par le score moyen
-des kanji utilisés durant ce combat (récompense la précision, pas juste la
-vitesse de clic).
+| Facteur | Paliers | Multiplicateur |
+|---|---|---|
+| **Précision** (score) | < 40 | Échec : 0 dégât |
+| | 40–70 | ×1.0 (base) |
+| | 70–90 | ×1.5 |
+| | > 90 | ×2.0 (coup critique) |
+| **Vitesse** (elapsed vs PAR_TIME_MS du kanji) | ≤ 0.6 × par | ×1.3 (très rapide) |
+| | ≤ par | ×1.0 (parfait) |
+| | ≤ 1.5 × par | ×0.8 (lent) |
+| | > 1.5 × par | ×0.6 (très lent) |
+
+`PAR_TIME_MS = 3000` pour 水 (exporté sur la popup, surchargeable par skill via
+`skill.get("par_time_ms")`). La popup affiche un chrono ("Temps : X.Xs") pour
+que le joueur sente la pression.
+
+L'XP gagnée à la mort du mob (Phase 1) sera multipliée par le produit
+précision × vitesse **moyen** des kanji utilisés durant ce combat (récompense la
+rapidité ET la précision). TODO laissé en commentaire dans `skill_bar.gd`.
 
 ---
 

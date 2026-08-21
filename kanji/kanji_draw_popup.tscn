@@ -1,9 +1,15 @@
-[gd_scene load_steps=2 format=3 uid="uid://b5vwdw0jp4x3a"]
+[gd_scene load_steps=3 format=3 uid="uid://b5vwdw0jp4x3a"]
 
 [ext_resource type="Script" path="res://kanji/kanji_draw_popup.gd" id="1_popup"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_drawbg"]
+bg_color = Color(0.941176, 0.941176, 0.941176, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
 [node name="KanjiDrawPopup" type="CanvasLayer"]
-process_mode = 2
 layer = 10
 visible = false
 script = ExtResource("1_popup")
@@ -54,35 +60,45 @@ offset_top = 20.0
 offset_right = 600.0
 offset_bottom = 420.0
 mouse_filter = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_drawbg")
 
 [node name="DrawingContainer" type="Node2D" parent="Backdrop/CenterPanel/DrawBackground"]
 
+[node name="TimerLabel" type="Label" parent="Backdrop/CenterPanel"]
+offset_left = 200.0
+offset_top = 428.0
+offset_right = 600.0
+offset_bottom = 452.0
+text = "Temps : 0.0s"
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 2
+
 [node name="ResultLabel" type="Label" parent="Backdrop/CenterPanel"]
 offset_left = 200.0
-offset_top = 430.0
+offset_top = 456.0
 offset_right = 600.0
-offset_bottom = 460.0
+offset_bottom = 480.0
 text = "Dessine le kanji puis clique sur Valider."
 theme_override_font_sizes/font_size = 16
 horizontal_alignment = 1
 
 [node name="ValidateButton" type="Button" parent="Backdrop/CenterPanel"]
 offset_left = 220.0
-offset_top = 470.0
+offset_top = 490.0
 offset_right = 340.0
-offset_bottom = 510.0
+offset_bottom = 530.0
 text = "Valider"
 
 [node name="ClearButton" type="Button" parent="Backdrop/CenterPanel"]
 offset_left = 360.0
-offset_top = 470.0
+offset_top = 490.0
 offset_right = 460.0
-offset_bottom = 510.0
+offset_bottom = 530.0
 text = "Effacer"
 
 [node name="CancelButton" type="Button" parent="Backdrop/CenterPanel"]
 offset_left = 470.0
-offset_top = 470.0
+offset_top = 490.0
 offset_right = 560.0
-offset_bottom = 510.0
+offset_bottom = 530.0
 text = "Annuler"
