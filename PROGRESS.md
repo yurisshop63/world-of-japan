@@ -125,6 +125,43 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 	  primitives), `take_damage(5)` décrémente et passe en CHASE, mise à 0 →
 	  DEAD, respawn programmé. Lancement complet `--quit-after 8` : aucun script
 	  error ni warning.
+- [x] **Commandes de combat façon DAoC** (`player.gd`) :
+	  - **FACE** (`face()`) : oriente instantanément le joueur vers
+	    `TargetSystem.current_target` (rotation Y seule via `look_at`, pas
+	    d'animation). Ne fait rien si aucune cible (log discret, pas d'erreur).
+	  - **STICK** (`toggle_stick()` / état `sticking`, logique dans
+	    `_physics_process` → `_process_stick()`) : suit automatiquement la cible
+	    en maintenant la portée de mêlée `MELEE_RANGE = 1.5` (même valeur que
+	    `mob.gd: melee_range`) et en restant face à elle. Désactivation
+	    automatique si la cible meurt / devient nulle (via le check d'invalidité),
+	    ou si le joueur rappuie (toggle). Respecte la gravité/collision existante
+	    de `player.gd` (n'écrase que la vélocité XZ, comme `_process_chase` de
+	    mob.gd). Implémenté comme **état sur player.gd** (pas de script séparé qui
+	    dupliquerait le mouvement).
+- [x] **Autoload KeybindConfig** (`res://autoload/keybind_config.gd`, déclaré dans
+	  `project.godot`) : dictionnaire `action -> keycode` avec `DEFAULT_KEYBINDS`
+	  (face → **C**, stick → **V** — touches vérifiées libres : flèches, A/Z,
+	  T/Y/U/I/O, 1-9, Ctrl, NumLock déjà pris). API : `get_keycode(action)`,
+	  `set_keycode(action, keycode)` (sauvegarde + émet `keybinds_changed`),
+	  `actions` (liste pour l'UI), `load_config()/save_config()` sur
+	  `user://keybinds.cfg` (même pattern ConfigFile que `MenuConfig`).
+- [x] **Câblage clavier** dans `player.gd::_unhandled_key_input` : les touches
+	  face/stick sont lues depuis `KeybindConfig.get_keycode()` (pas de touche en
+	  dur) — réassignables sans retoucher au code.
+- [x] **Fenêtre de configuration** (`res://ui/keybind_window.gd/.tscn`) : liste
+	  les actions de `KeybindConfig.actions` (label + bouton affichant la touche
+	  actuelle), bouton "Réassigner" qui capture la prochaine touche pressée
+	  (Échap = annuler, modificateurs seuls ignorés, événement consommé pendant
+	  la capture), met à jour KeybindConfig + sauvegarde. Intégrée au menu
+	  circulaire existant : action id=5 "Raccourcis" dans `menu_config.gd` avec
+	  `scene: "res://ui/keybind_window.tscn"` (même champ "scene" que les autres
+	  actions, ouverte par `WindowManager.open_action()`) — pas de nouveau point
+	  d'entrée UI parallèle.
+- [x] **Validation raccourcis** (headless, autoload temporaire retiré ensuite) :
+	  KeybindConfig (défauts C/V, set_keycode OK), `face()` oriente vers la cible
+	  (rotation Y), `toggle_stick()` active puis se désactive quand la cible
+	  devient nulle, fenêtre instanciée avec 2 actions listées. Lancement complet
+	  `--quit-after 6` : aucun script error ni warning.
 
 ## 🚧 En cours
 - [ ] _(aucun blocage actif)_
@@ -134,6 +171,14 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
    (TODO laissé en commentaire dans `skill_bar.gd`).
 2. Associer un effet élémentaire aux kanji/mobs (Feu/Terre/Vent/Eau) — actuellement
    pas de différenciation de puissance entre éléments (uniquement visuelle).
+3. **Macros textuelles (Étape 3 de la session raccourcis, optionnelle)** : champ de
+   saisie simple façon chat MMO pour taper `/face` ou `/stick` et déclencher la même
+   action. NON implémenté cette session (les raccourcis clavier directs suffisent
+   pour l'Alpha). TODO clair : ajouter un LineEdit + parser les commandes `/...`
+   qui appellent `Player.face()` / `Player.toggle_stick()` (les fonctions sont déjà
+   publiques et prêtes à être réutilisées par les boutons mobiles aussi).
+4. Contrôle mobile (joystick + boutons) — session séparée prévue : réutiliser
+   `face()`, `toggle_stick()` et `KeybindConfig` pour les boutons à l'écran.
 
 ---
 
@@ -149,6 +194,11 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
   FastNoiseLite (roche/terre/herbe), collision + murs.
 - `mob.gd` / `mob.tscn` — mob paramétré par `mob_type` (7 types 曜日, modèles en
   primitives low-poly). `main.tscn` — 21 instances (3 par type).
+- `autoload/keybind_config.gd` — autoload KeybindConfig : actions face/stick,
+  touches par défaut C/V, `user://keybinds.cfg`.
+- `ui/keybind_window.gd` / `.tscn` — fenêtre de réassignement des touches
+  (ouverte via le menu circulaire, action id=5 "Raccourcis").
+- `player.gd` — `face()`, `toggle_stick()`/`_process_stick()` (état `sticking`).
 - `CREDITS.md` — attribution KanjiVG (licence CC BY-SA 3.0).
 - `World_of_Japan_Roadmap.md` — feuille de route (Phase 0 cochée partiellement).
 
@@ -187,6 +237,20 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 - **Mobs — un seul template paramétré** (choix de session) : `mob.gd` construit le
   modèle en primitives selon `mob_type`. Ajouter un type = ajouter un `_build_*` +
   une entrée enum + le placement dans `main.tscn`. Pas de 7 scènes séparées.
+- **Commandes de combat = états/méthodes de `player.gd`** (choix de session) :
+  `face()` et `toggle_stick()` sont publiques et appelables par script — c'est
+  volontaire pour la réutilisation future par les boutons mobiles et les macros
+  texte. Ne pas recréer de logique de déplacement dupliquée ailleurs.
+- **Touches par défaut FACE/STICK = C / V** (défaut, réassignables via
+  KeybindConfig → `user://keybinds.cfg`) : vérifiées libres face aux touches
+  déjà utilisées (flèches, A/Z, T/Y/U/I/O, 1-9, Ctrl, NumLock). Toujours vérifier
+  les conflits avant d'ajouter une nouvelle touche en dur.
+- **STICK : portée = `MELEE_RANGE = 1.5`** en dur dans `player.gd` (même valeur
+  que `mob.gd: melee_range`). Si la portée de mêlée des mobs change un jour,
+  penser à synchroniser les deux.
+- **Macros texte (/face, /stick) NON implémentées** (étape 3 optionnelle) — voir
+  "À faire ensuite" pour le TODO. Les raccourcis clavier directs suffisent pour
+  l'Alpha.
 - TODO Phase 1 laissé en commentaire : XP finale = produit précision × vitesse du
   combat (score moyen des kanji utilisés).
 
@@ -215,7 +279,10 @@ via `StrokeScoring.run_auto_test()` (attendu : parfait 100, aléatoire ~0-15, hu
 imprécis 65-85). Compiler un script avec `--check-only --script <fichier.gd>`
 (piège : échoue sur les autoloads hors contexte de jeu). Pour tester le popup :
 instancier `res://kanji/kanji_draw_popup.tscn` puis `open()`. Pour tester les mobs :
-instancier `mob.tscn`, régler `mob_type`, appeler `take_damage()`. Pour la console :
+instancier `mob.tscn`, régler `mob_type`, appeler `take_damage()`. Pour tester les
+commandes : `Player.face()`, `Player.toggle_stick()` (avec `TargetSystem.select(mob)`
+au préalable). Fenêtre raccourcis : ouvrir le menu circulaire (bouton MENU) puis
+l'action "Raccourcis", ou appeler `WindowManager.open_action(5)`. Pour la console :
 lancer `chcp 65001` avant (sinon kanji mal affichés, codepage 850).
 
 ---

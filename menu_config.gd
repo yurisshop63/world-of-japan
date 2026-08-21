@@ -24,7 +24,7 @@ var actions: Array = [
 	{"id": 2, "label": "3", "scene": ""},
 	{"id": 3, "label": "4", "scene": ""},
 	{"id": 4, "label": "5", "scene": ""},
-	{"id": 5, "label": "6", "scene": ""},
+	{"id": 5, "label": "Raccourcis", "scene": "res://ui/keybind_window.tscn"},
 ]
 
 ## slot_actions[i] = id de l'action affichée à l'emplacement i (0 à 5)

@@ -288,7 +288,7 @@ d'investir dans le contenu à l'échelle.
 - ✅ Feedback visuel (flash couleur selon score)
 - ✅ 4 kanji intégrés au combat (水土火風, popup temps réel)
 - ❌ Scène isolée `test_trace.tscn` conservée comme référence — l'Alpha vit dans le
-      projet A (fusion faite en Phase 0)
+	  projet A (fusion faite en Phase 0)
 
 ---
 
@@ -312,6 +312,11 @@ d'investir dans le contenu à l'échelle.
       terrain procédural (tuiles hexagonales FastNoiseLite, roche/terre/herbe)
       + 7 types de mobs élémentaires thème 曜日 (火水±月木金日) en primitives
       low-poly, 21 instances réparties sur le terrain
+- [x] Commandes de combat façon DAoC — **fait** : `/face` (orienter vers la
+      cible) et `/stick` (suivre la cible en gardant la portée de mêlée),
+      touches par défaut **C** / **V**, réassignables via la fenêtre Raccourcis
+      du menu (KeybindConfig, `user://keybinds.cfg`). Macros texte `/...` tapées
+      en chat : TODO (étape 3 optionnelle, non prioritaire)
 - [ ] Quête ultra simple ("élimine 5 Mob X" ou "récupère 3 items Y")
 - [ ] Loot basique (drop d'item au décès du mob, probabilité simple)
 - [ ] Inventaire minimal (liste, pas de grille sophistiquée)

@@ -14,6 +14,10 @@ var pitch = 0.0
 var max_pitch = deg_to_rad(70.0)
 var auto_run = false
 
+# --- Commandes de combat façon DAoC (/face, /stick) ------------------------
+const MELEE_RANGE := 1.5  # portée de mêlée des mobs (mob.gd: melee_range)
+var sticking := false     # mode "collé à la cible" (toggle)
+
 @onready var left_arm_pivot = $Model/LeftArmPivot
 @onready var right_arm_pivot = $Model/RightArmPivot
 @onready var left_leg_pivot = $Model/LeftLegPivot
@@ -67,6 +71,11 @@ func _physics_process(delta):
 	velocity.x = direction.x * current_speed
 	velocity.z = direction.z * current_speed
 
+	# Mode STICK : la vélocité est écrasée pour suivre la cible (comme mob.gd
+	# dans _process_chase). La gravité / collision de ce script reste active.
+	if sticking:
+		_process_stick()
+
 	move_and_slide()
 
 	# Animation de marche
@@ -107,8 +116,53 @@ func _input(event):
 func _on_player_died():
 	global_position = PlayerStats.bind_position
 	velocity = Vector3.ZERO
+	sticking = false
 	PlayerStats.health = PlayerStats.max_health
 	PlayerStats.health_changed.emit()
+
+# -------------------------------------------------
+# Commandes de combat façon DAoC (appelables par script
+# pour réutilisation future par les boutons mobiles)
+# -------------------------------------------------
+
+## /face — oriente instantanément le joueur vers la cible (rotation Y seule).
+## Ne fait rien si aucune cible (log discret, pas d'erreur).
+func face():
+	var target = TargetSystem.current_target
+	if target == null or not is_instance_valid(target):
+		print("FACE : aucune cible sélectionnée.")
+		return
+	var dir = target.global_position - global_position
+	dir.y = 0
+	if dir.length() < 0.01:
+		return
+	look_at(global_position + dir, Vector3.UP)
+
+## /stick — toggle du mode "collé à la cible" (suit + reste face à elle).
+func toggle_stick():
+	sticking = not sticking
+	print("STICK : ", "activé" if sticking else "désactivé")
+
+func _process_stick():
+	var target = TargetSystem.current_target
+	if target == null or not is_instance_valid(target):
+		sticking = false
+		print("STICK : cible invalide, désactivé.")
+		return
+
+	var dir = target.global_position - global_position
+	dir.y = 0
+	var dist = dir.length()
+	if dist > 0.01:
+		look_at(global_position + dir, Vector3.UP)
+
+	if dist > MELEE_RANGE:
+		dir = dir.normalized()
+		velocity.x = dir.x * speed
+		velocity.z = dir.z * speed
+	else:
+		velocity.x = 0
+		velocity.z = 0
 
 func _unhandled_key_input(event):
 	if event.pressed and not event.echo:
@@ -123,3 +177,8 @@ func _unhandled_key_input(event):
 				PlayerStats.add_xp(37)
 			KEY_O:
 				PlayerStats.add_pvp_xp(20)
+		# Commandes de combat /face /stick — touches configurables (KeybindConfig)
+		if event.keycode == KeybindConfig.get_keycode("face"):
+			face()
+		elif event.keycode == KeybindConfig.get_keycode("stick"):
+			toggle_stick()
