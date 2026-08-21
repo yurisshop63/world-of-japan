@@ -4,7 +4,7 @@
 > Objectif : qu'une nouvelle session (ou un autre worker) puisse reprendre sans que l'humain ait à tout réexpliquer.
 
 **Dernière mise à jour :** 2026-08-21
-**Dernier commit poussé :** (en attente du push — voir blocage ci-dessous)
+**Dernier commit poussé :** `6dbb3db`
 
 ---
 
@@ -35,7 +35,7 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 	  avec le kanji du skill (tous les skills → 水 pour l'instant), attend le signal,
       applique la formule ROADMAP : <40 → 0 dégât ; 40-70 → base 2-6 ;
       70-90 → ×1.5 ; >90 → ×2 (critique). Annulation → aucune action, pas de perte
-      de tour. Blocage d'un 2e dessin simultané.
+	  de tour. Blocage d'un 2e dessin simultané.
 - [x] **Correctif contraste popup** : fond de la zone de dessin clair (`#F0F0F0`,
 	  StyleBoxFlat dans le `.tscn`), tracé joueur quasi noir 5px, référence en
 	  pointillés orange clair 3px (guide visuellement distinct), flash de score
@@ -68,16 +68,18 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 	  elapsed_ms≈1)` émis dans le vrai contexte de jeu, monde non pausé, mort du
 	  joueur → popup libéré sans dégâts.
 
+- [x] **Push sur main** — repo distant `world-of-japan` créé (vide, sans README)
+	  et branché. Poussé : `f6346cc` → `a631476` → `6dbb3db` (HEAD = `main`).
+	  Remote : `https://github.com/yurisshop63/world-of-japan.git`
+	  (origin, tracking `origin/main`).
+
 ## 🚧 En cours
-- [ ] **Push sur main** — le remote `https://github.com/yurisshop63/world-of-japan.git`
-	  répond "Repository not found" (repo distant non créé ou accès refusé).
-	  À confirmer avec l'utilisateur avant push.
+- [ ] _(aucun blocage actif)_
 
 ## 📋 À faire ensuite (priorité)
-1. Créer/valider le repo GitHub `world-of-japan` (owner yurisshop63) puis `git push -u origin main`.
-2. Ajouter 2-3 kanji supplémentaires (SVG + effet associé + `par_time_ms` par kanji)
+1. Ajouter 2-3 kanji supplémentaires (SVG + effet associé + `par_time_ms` par kanji)
    pour sortir du cas unique 水.
-3. Phase 1 : quête simple, loot, inventaire, XP = précision × vitesse moyen du combat
+2. Phase 1 : quête simple, loot, inventaire, XP = précision × vitesse moyen du combat
    (TODO laissé en commentaire dans `skill_bar.gd`).
 
 ---
