@@ -4,7 +4,7 @@
 > Objectif : qu'une nouvelle session (ou un autre worker) puisse reprendre sans que l'humain ait à tout réexpliquer.
 
 **Dernière mise à jour :** 2026-08-21
-**Dernier commit poussé :** `6dbb3db`
+**Dernier commit poussé :** `36579d5`
 
 ---
 
@@ -76,24 +76,47 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 	  et branché. Poussé : `f6346cc` → `a631476` → `6dbb3db` (HEAD = `main`).
 	  Remote : `https://github.com/yurisshop63/world-of-japan.git`
 	  (origin, tracking `origin/main`).
+- [x] **Ajout de 3 kanji (土/火/風)** pour sortir du cas unique 水 :
+	  - SVG récupérés depuis **KanjiVG** (`github.com/KanjiVG/kanjivg`, licence
+	    CC BY-SA 3.0 — attribué dans `CREDITS.md` et en-tête de chaque SVG) :
+	    `0571f.svg` (土, 3 traits), `0706b.svg` (火, 4 traits), `098a8.svg`
+	    (風, 9 traits). Codepoints vérifiés : 土=U+571F, 火=U+706B, 風=U+98A8.
+	    Note : la consigne initiale donnait U+5730 (=地) pour 土, corrigé.
+	    Fichiers `.import` générés par Godot (`--import`).
+	  - **Skills associés** dans `skill_bar.gd` via `KANJI_DATA` (structure
+	    dédiée : dict nom→{name, kanji, par_time_ms}, dupliqué par slot) :
+	    slot 1 = Frappe Eau (水, 3000ms), slot 2 = Frappe Terre (土, 2000ms),
+	    slot 3 = Frappe Feu (火, 2800ms), slot 4 = Frappe Vent (風, 5500ms).
+	    Slots 5-9 vides. Pas de différenciation de puissance (base 2-6, portée 3.0).
+	  - **`run_auto_test_all()`** ajouté à `stroke_scoring.gd` (boucle sur les
+	    4 kanji) ; `run_auto_test()` reste pour 水 seul.
+	  - **Validation headless OK** : parfait = 100 pour les 4 kanji ; aléatoire
+	    = 14 (水), 10 (土), 26 (火), 5 (風) ; humain imprécis = 79-89. Le 26 de
+	    火 reste très en dessous du seuil de réussite (60) : artefact statistique
+	    (traits aléatoires qui recoupent le cadre), pas un défaut de scoring.
+	    Slots vérifiés (4 équipés, 5-9 vides), popup ouverte avec chacun des
+	    4 kanji (traits affichés 4/3/4/9), jeu complet lancé sans erreur.
 
 ## 🚧 En cours
 - [ ] _(aucun blocage actif)_
 
 ## 📋 À faire ensuite (priorité)
-1. Ajouter 2-3 kanji supplémentaires (SVG + effet associé + `par_time_ms` par kanji)
-   pour sortir du cas unique 水.
-2. Phase 1 : quête simple, loot, inventaire, XP = précision × vitesse moyen du combat
+1. Phase 1 : quête simple, loot, inventaire, XP = précision × vitesse moyen du combat
    (TODO laissé en commentaire dans `skill_bar.gd`).
+2. Associer un effet élémentaire aux kanji (Feu/Terre/Vent/Eau) — actuellement
+   pas de différenciation de puissance entre éléments.
 
 ---
 
 ## 🗂️ Fichiers clés
 - `kanji/kanji_draw_popup.gd` / `.tscn` — popup de dessin réutilisable (signaux).
-- `kanji/stroke_scoring.gd`, `kanji/svg_parser.gd` — modules importés (non modifiés
-  sauf le chemin SVG dans `run_auto_test()`).
-- `kanji/kanji_data/06c34.svg` — kanji de référence (水, 4 traits).
-- `skill_bar.gd` — `use_slot()` branché sur le popup + formule dégâts/score.
+- `kanji/stroke_scoring.gd`, `kanji/svg_parser.gd` — modules importés
+  (score kanji ; `run_auto_test_all()` pour valider les 4 kanji).
+- `kanji/kanji_data/*.svg` — 4 kanji de référence : `06c34.svg` (水, 4 traits),
+  `0571f.svg` (土, 3), `0706b.svg` (火, 4), `098a8.svg` (風, 9). Source KanjiVG.
+- `skill_bar.gd` — `KANJI_DATA` (4 skills élémentaires) + `use_slot()` branché
+  sur le popup + formule dégâts/score.
+- `CREDITS.md` — attribution KanjiVG (licence CC BY-SA 3.0).
 - `World_of_Japan_Roadmap.md` — feuille de route (Phase 0 cochée partiellement).
 
 ## ⚠️ Décisions / contraintes à ne pas oublier
@@ -101,8 +124,13 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
   continue d'attaquer ; la vitesse devient un facteur de score. Le popup tourne
   en mode normal (pas de `process_mode` spécial). Choix de design assumé : le
   joueur est laissé sous pression, il doit dessiner vite et juste.
-- **PAR_TIME_MS = 3000** pour 水 (exporté `par_time_ms` sur le popup, surchargeable
-  par skill via `skill.get("par_time_ms")`). Ajuster kanji par kanji.
+- **PAR_TIME_MS par kanji** (clé `par_time_ms` du skill, via `KANJI_DATA` dans
+  `skill_bar.gd`) : 水=3000, 土=2000, 火=2800, 風=5500. Temps "parfait" de dessin.
+- **4 skills Alpha** (slots 1-4, `KANJI_DATA`) : Frappe Eau/Terre/Feu/Vent.
+  Pas de différenciation de puissance — seul le kanji change. Slots 5-9 vides.
+- **SVG = format KanjiVG 1.0** (voir section "Format des SVG" ci-dessous) :
+  1 `<path>` par trait, ordre = ordre de dessin, `d=` C/S/Q/T/L/Z, repère
+  109×109. Les 4 fichiers proviennent de KanjiVG (CC BY-SA 3.0, `CREDITS.md`).
 - **Formule dégâts** : base 2-6 (aléatoire) × précision × vitesse, arrondi, min 1
   si score ≥ 40. Détails paliers dans `skill_bar.gd` / PROGRESS ci-dessus.
 - **Scoring importé tel quel** : normalisation globale par côté, comparaison ordonnée,
@@ -118,8 +146,6 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 - **`--check-only --script skill_bar.gd` seul échoue** : `TargetSystem`/`PlayerStats`
   sont des autoloads, non résolus hors contexte de jeu (faux positif). Vérifier via
   lancement headless du jeu, ou via un autoload temporaire.
-- Tous les skills utilisent 水 (`DEFAULT_KANJI_SVG`) — la clé `kanji` du skill est prévue
-  pour étendre plus tard.
 - TODO Phase 1 laissé en commentaire : XP finale = produit précision × vitesse du
   combat (score moyen des kanji utilisés).
 
@@ -143,3 +169,19 @@ imprécis 65-85). Compiler un script avec `--check-only --script <fichier.gd>`
 instancier `res://kanji/kanji_draw_popup.tscn` puis `open()`. Pour tester la
 formule combinée en contexte réel : ajouter un autoload temporaire qui appelle
 `SkillBar._compute_damage(score, elapsed_ms, par_time_ms)`, puis le retirer.
+
+---
+
+## 📐 Format des SVG de référence (KanjiVG) — IMPORTANT
+Chaque fichier `kanji/kanji_data/<hex>.svg` est un SVG KanjiVG **1.0** (licence
+CC BY-SA 3.0, copyright Ulrich Apel, en-tête présent dans le fichier) :
+- `<svg width=109 height=109 viewBox="0 0 109 109">`, style de groupe racine
+  `fill:none;stroke:#000000;stroke-width:3`.
+- Un `<g kvg:element="X">` contient UN `<path>` PAR TRAIT (ordre de dessin =
+  ordre des traits, `id="kvg:<hex>-s<N>"`).
+- Chaque trait est un seul `d="..."` de commandes **cubiques/quadratiques**
+  (`M`, `C`, `S`, `Q`, `T`, `L`, `Z`) ; le parseur (`SvgParser`) extrait tous
+  les `d=` de tous les `<path>` (regex `d="..."`), échantillonne les Bézier
+  (17 pts/cubique, 13 pts/quad) en une polyligne par trait.
+- Pas de `transform` par trait (les coordonnées sont déjà dans le repère 109×109).
+- `SvgParser` ignore les `<text>` (numéros de traits) et les attributs `kvg:*`.

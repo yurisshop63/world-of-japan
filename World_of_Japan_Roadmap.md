@@ -297,15 +297,18 @@ d'investir dans le contenu à l'échelle.
 - [x] Brancher `SkillBar.use_slot()` : au lieu de dégâts fixes aléatoires,
       ouvrir le popup kanji, récupérer le score, en déduire dégâts/vitesse/XP
       (formule combinée précision × vitesse implémentée — voir section formule)
-- [ ] Ajouter 2-3 kanji supplémentaires (SVG + effet associé + `par_time_ms`)
-      pour sortir du cas unique et valider que le système généralise
+- [x] Ajouter 2-3 kanji supplémentaires (SVG + effet associé + `par_time_ms`)
+      pour sortir du cas unique et valider que le système généralise — **fait** :
+      土 (0571f.svg, 3 traits), 火 (0706b.svg, 4), 風 (098a8.svg, 9) depuis
+      KanjiVG (CC BY-SA), skills slots 1-4 équipés, scoring validé (parfait=100
+      sur les 4)
 
 ## Phase 1 — Boucle de jeu minimale (Alpha)
 - [ ] Quête ultra simple ("élimine 5 Mob X" ou "récupère 3 items Y")
 - [ ] Loot basique (drop d'item au décès du mob, probabilité simple)
 - [ ] Inventaire minimal (liste, pas de grille sophistiquée)
 - [ ] Formule dégâts/XP liée au score kanji — **dégâts fait** (précision × vitesse),
-      **XP restant** (précision × vitesse moyen du combat, TODO commenté)
+	  **XP restant** (précision × vitesse moyen du combat, TODO commenté)
 - [ ] Feedback de level up visible (le système de bulles existe déjà)
 
 ## Phase 2 — Test utilisateur / confort

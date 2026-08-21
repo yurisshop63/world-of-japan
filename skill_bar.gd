@@ -5,11 +5,19 @@ signal skill_used(slot_index, skill)
 
 var slots = []
 const MELEE_RANGE = 3.0
-# Kanji associé par défaut à tous les skills pour l'instant (水).
-# À terme : chaque skill aura son propre kanji (clé "kanji" dans la fiche).
+# Kanji de repli si un skill n'en précise pas (ne devrait plus arriver).
 const DEFAULT_KANJI_SVG := "res://kanji/kanji_data/06c34.svg"
 # Temps "parfait" par défaut pour dessiner le kanji (ms) — voir kanji_draw_popup.
 const DEFAULT_PAR_TIME_MS := 3000
+# Les 4 kanji disponibles (Alpha). Chaque skill référence le sien via sa fiche :
+# {"name", "kanji", "par_time_ms"}. Le par_time_ms est le temps "parfait" pour
+# dessiner ce kanji — plus le kanji est complexe (nb de traits), plus il est long.
+const KANJI_DATA := {
+	"mizu": {"name": "Frappe Eau", "kanji": "res://kanji/kanji_data/06c34.svg", "par_time_ms": 3000},
+	"tsuchi": {"name": "Frappe Terre", "kanji": "res://kanji/kanji_data/0571f.svg", "par_time_ms": 2000},
+	"hi": {"name": "Frappe Feu", "kanji": "res://kanji/kanji_data/0706b.svg", "par_time_ms": 2800},
+	"kaze": {"name": "Frappe Vent", "kanji": "res://kanji/kanji_data/098a8.svg", "par_time_ms": 5500},
+}
 
 var _active_popup = null
 var _pending_target = null
@@ -18,7 +26,13 @@ var _pending_skill_index = -1
 func _ready():
 	for i in range(9):
 		slots.append(null)
-	equip_skill(0, {"name": "Frappe", "type": "corps-à-corps"})
+	# Alpha : slots 1-4 = les 4 kanji élémentaires, slots 5-9 vides.
+	# Pas de différenciation de puissance entre éléments (dégâts base 2-6,
+	# portée 3.0 identiques) — seul le kanji à dessiner change.
+	equip_skill(0, KANJI_DATA["mizu"].duplicate())
+	equip_skill(1, KANJI_DATA["tsuchi"].duplicate())
+	equip_skill(2, KANJI_DATA["hi"].duplicate())
+	equip_skill(3, KANJI_DATA["kaze"].duplicate())
 	# Si le joueur meurt pendant qu'il dessine, on ferme le popup sans dégâts.
 	PlayerStats.player_died.connect(_on_player_died)
 

@@ -57,18 +57,36 @@ static func compute_score(player: Array, reference: Array) -> Dictionary:
 # "parfait" (points de référence), un tracé aléatoire et un tracé "humain
 # imprécis mais reconnaissable" (calibration). Affiche les scores.
 static func run_auto_test() -> void:
-	var ref_strokes: Array = SvgParser.load_strokes("res://kanji/kanji_data/06c34.svg")
+	run_auto_test_for("res://kanji/kanji_data/06c34.svg", "水")
+
+
+# Version étendue : boucle sur les 4 kanji disponibles (水, 土, 火, 風) pour
+# valider que le scoring généralise au-delà du cas unique. Pour chaque kanji :
+# tracé parfait → proche de 100 ; tracé aléatoire → proche de 0.
+static func run_auto_test_all() -> void:
+	var kanjis := [
+		["res://kanji/kanji_data/06c34.svg", "水"],
+		["res://kanji/kanji_data/0571f.svg", "土"],
+		["res://kanji/kanji_data/0706b.svg", "火"],
+		["res://kanji/kanji_data/098a8.svg", "風"],
+	]
+	for k in kanjis:
+		run_auto_test_for(k[0], k[1])
+
+
+static func run_auto_test_for(svg_path: String, kanji_label: String) -> void:
+	var ref_strokes: Array = SvgParser.load_strokes(svg_path)
 	if ref_strokes.is_empty():
-		print("AUTO-TEST : impossible de charger le SVG de référence.")
+		print("AUTO-TEST [", kanji_label, "] : impossible de charger le SVG.")
 		return
 
 	# Cas 1 : tracé "parfait" = les points de référence eux-mêmes servent de
 	# tracé joueur (forme, ordre et sens identiques, position parfaite).
 	var perfect: Dictionary = compute_score(ref_strokes, ref_strokes)
-	print("=== AUTO-TEST : tracé parfait (points de référence) -> ", perfect.score, " / 100 ===")
+	print("=== AUTO-TEST [", kanji_label, "] : tracé parfait -> ", perfect.score, " / 100 ===")
 
-	# Cas 2 : tracé aléatoire = 4 traits aux points complètement aléatoires,
-	# sans rapport avec la référence (le nombre de traits, lui, correspond).
+	# Cas 2 : tracé aléatoire = autant de traits que la référence, aux points
+	# complètement aléatoires, sans rapport avec la référence.
 	var random_strokes: Array = []
 	for i in range(ref_strokes.size()):
 		var stroke := PackedVector2Array()
@@ -77,7 +95,7 @@ static func run_auto_test() -> void:
 			stroke.append(origin + Vector2(randf() * 150.0 - 75.0, randf() * 150.0 - 75.0))
 		random_strokes.append(stroke)
 	var random_result: Dictionary = compute_score(random_strokes, ref_strokes)
-	print("=== AUTO-TEST : tracé aléatoire -> ", random_result.score, " / 100 ===")
+	print("=== AUTO-TEST [", kanji_label, "] : tracé aléatoire -> ", random_result.score, " / 100 ===")
 
 	# Cas 3 : tracé "humain imprécis mais reconnaissable" : chaque trait de la
 	# référence subit une petite rotation (autour du centre du trait) et un
@@ -95,7 +113,7 @@ static func run_auto_test() -> void:
 			noisy.append((p - center).rotated(angle) + center + offset)
 		noisy_strokes.append(noisy)
 	var noisy_result: Dictionary = compute_score(noisy_strokes, ref_strokes)
-	print("=== AUTO-TEST : tracé humain imprécis (bruit angle+espacement) -> ", noisy_result.score, " / 100 ===")
+	print("=== AUTO-TEST [", kanji_label, "] : tracé humain imprécis -> ", noisy_result.score, " / 100 ===")
 
 
 # Rééchantillonne une polyligne en N points équidistants (par longueur d'arc)
