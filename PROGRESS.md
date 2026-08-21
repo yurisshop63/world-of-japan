@@ -37,9 +37,13 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
       70-90 → ×1.5 ; >90 → ×2 (critique). Annulation → aucune action, pas de perte
 	  de tour. Blocage d'un 2e dessin simultané.
 - [x] **Correctif contraste popup** : fond de la zone de dessin clair (`#F0F0F0`,
-	  StyleBoxFlat dans le `.tscn`), tracé joueur quasi noir 5px, référence en
-	  pointillés orange clair 3px (guide visuellement distinct), flash de score
+	  StyleBoxFlat dans le `.tscn`), tracé joueur quasi noir 5px, flash de score
 	  assombri pour rester lisible sur fond clair (retour à `#F0F0F0`).
+- [x] **Correctif lisibilité référence** : le panneau de référence a maintenant
+	  un fond clair (`#F5F5F5`, StyleBoxFlat bordé) et le kanji guide est dessiné
+	  en **trait continu bleu nuit net** (4px) au lieu des pointillés orange clair
+	  fins illisibles. Contraste fort avec le tracé joueur (quasi noir) tout en
+	  restant parfaitement lisible.
 - [x] **Suppression de la pause (temps réel)** : le monde ne se met plus en pause
 	  pendant le dessin ; le popup tourne en mode normal. La vitesse devient un
 	  second facteur de score. Souris forcée en `MOUSE_MODE_VISIBLE` à `open()`

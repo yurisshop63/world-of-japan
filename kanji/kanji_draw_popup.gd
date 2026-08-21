@@ -51,12 +51,11 @@ var _mouse_switched_to_visible: bool = false
 
 # Couleurs / rendu (contraste lisible : fond clair, tracé sombre).
 const DRAW_BG_COLOR := Color(0.941, 0.941, 0.941)   # #F0F0F0
+const REF_BG_COLOR := Color(0.961, 0.961, 0.961)    # #F5F5F5 (fond du panneau référence)
 const PLAYER_STROKE_COLOR := Color(0.08, 0.08, 0.15) # quasi noir
 const PLAYER_STROKE_WIDTH := 5.0
-const REF_STROKE_COLOR := Color(0.9, 0.6, 0.15)      # orange clair (guide)
-const REF_STROKE_WIDTH := 3.0
-const REF_DASH_LEN := 8.0
-const REF_DASH_GAP := 5.0
+const REF_STROKE_COLOR := Color(0.12, 0.27, 0.58)    # bleu nuit net (guide lisible)
+const REF_STROKE_WIDTH := 4.0
 
 
 func _ready() -> void:
@@ -173,8 +172,8 @@ func _on_clear_pressed() -> void:
 # ---------------------------------------------------------------------------
 
 # Dessine le kanji de référence dans le panneau de gauche à partir du SVG.
-# Le tracé est en pointillés orange clair : visuellement distinct du tracé
-# joueur (noir), on comprend que c'est un guide, pas un dessin à imiter.
+# Trait continu bleu nuit net sur fond clair (contraste) : le guide est lisible
+# d'un coup d'œil tout en restant distinct du tracé joueur (quasi noir).
 func _draw_reference() -> void:
 	for child in reference_container.get_children():
 		child.queue_free()
@@ -185,55 +184,15 @@ func _draw_reference() -> void:
 	var ref_scale := 130.0 / 109.0
 	var offset := Vector2(10.0, 10.0)
 	for i in range(ref_strokes.size()):
-		var pts := PackedVector2Array()
+		var line := Line2D.new()
 		for p in ref_strokes[i]:
-			pts.append(p * ref_scale + offset)
-		_add_dashed_line(pts)
-
-
-# Ajoute un trait de référence en pointillés (tirets + trous réguliers).
-func _add_dashed_line(points: PackedVector2Array) -> void:
-	if points.size() < 2:
-		return
-	var cycle := REF_DASH_LEN + REF_DASH_GAP
-	var line := _new_dash_line()
-	line.add_point(points[0])
-	var traveled := 0.0
-	var drawing_dash := true
-	for i in range(1, points.size()):
-		var prev := points[i - 1]
-		var curr := points[i]
-		var seg_len := prev.distance_to(curr)
-		var seg_pos := 0.0
-		while seg_pos < seg_len:
-			var phase := fposmod(traveled, cycle)
-			var remaining_in_state := (REF_DASH_LEN if drawing_dash else REF_DASH_GAP) - phase
-			var remaining_in_seg := seg_len - seg_pos
-			var step: float = min(remaining_in_state, remaining_in_seg)
-			if step <= 0.0:
-				break
-			var from := prev.lerp(curr, seg_pos / seg_len)
-			var to := prev.lerp(curr, (seg_pos + step) / seg_len)
-			seg_pos += step
-			traveled += step
-			if drawing_dash:
-				line.add_point(to)
-			if phase + step >= (REF_DASH_LEN if drawing_dash else cycle) - 0.001:
-				drawing_dash = not drawing_dash
-				if drawing_dash:
-					line = _new_dash_line()
-					line.add_point(to)
-
-
-func _new_dash_line() -> Line2D:
-	var line := Line2D.new()
-	line.width = REF_STROKE_WIDTH
-	line.default_color = REF_STROKE_COLOR
-	line.joint_mode = Line2D.LINE_JOINT_ROUND
-	line.begin_cap_mode = Line2D.LINE_CAP_ROUND
-	line.end_cap_mode = Line2D.LINE_CAP_ROUND
-	reference_container.add_child(line)
-	return line
+			line.add_point(p * ref_scale + offset)
+		line.width = REF_STROKE_WIDTH
+		line.default_color = REF_STROKE_COLOR
+		line.joint_mode = Line2D.LINE_JOINT_ROUND
+		line.begin_cap_mode = Line2D.LINE_CAP_ROUND
+		line.end_cap_mode = Line2D.LINE_CAP_ROUND
+		reference_container.add_child(line)
 
 
 # ---------------------------------------------------------------------------

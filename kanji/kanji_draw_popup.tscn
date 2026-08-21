@@ -1,6 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://b5vwdw0jp4x3a"]
+[gd_scene format=3 uid="uid://b5vwdw0jp4x3a"]
 
-[ext_resource type="Script" path="res://kanji/kanji_draw_popup.gd" id="1_popup"]
+[ext_resource type="Script" uid="uid://b4flnjgnaoy5o" path="res://kanji/kanji_draw_popup.gd" id="1_popup"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_drawbg"]
 bg_color = Color(0.941176, 0.941176, 0.941176, 1)
@@ -9,22 +9,33 @@ corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
-[node name="KanjiDrawPopup" type="CanvasLayer"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_refbg"]
+bg_color = Color(0.961, 0.961, 0.961, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.5, 0.5, 0.5, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="KanjiDrawPopup" type="CanvasLayer" unique_id=1036755444]
 layer = 10
 visible = false
 script = ExtResource("1_popup")
 
-[node name="Backdrop" type="ColorRect" parent="."]
+[node name="Backdrop" type="ColorRect" parent="." unique_id=1753056535]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 0
 color = Color(0, 0, 0, 0.45)
 
-[node name="CenterPanel" type="Panel" parent="Backdrop"]
-anchors_preset = 8
+[node name="CenterPanel" type="Panel" parent="Backdrop" unique_id=2011401494]
+layout_mode = 0
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
@@ -36,67 +47,75 @@ offset_bottom = 270.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="ReferenceTitle" type="Label" parent="Backdrop/CenterPanel"]
+[node name="ReferenceTitle" type="Label" parent="Backdrop/CenterPanel" unique_id=1243276497]
+layout_mode = 0
 offset_left = 20.0
 offset_top = 10.0
 offset_right = 180.0
 offset_bottom = 34.0
-text = "Référence :"
 theme_override_font_sizes/font_size = 16
+text = "Référence :"
 horizontal_alignment = 1
 
-[node name="ReferencePanel" type="Panel" parent="Backdrop/CenterPanel"]
+[node name="ReferencePanel" type="Panel" parent="Backdrop/CenterPanel" unique_id=909278099]
+layout_mode = 0
 offset_left = 20.0
 offset_top = 40.0
 offset_right = 170.0
 offset_bottom = 190.0
 mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_refbg")
 
-[node name="ReferenceContainer" type="Node2D" parent="Backdrop/CenterPanel/ReferencePanel"]
+[node name="ReferenceContainer" type="Node2D" parent="Backdrop/CenterPanel/ReferencePanel" unique_id=1778809113]
 
-[node name="DrawBackground" type="Panel" parent="Backdrop/CenterPanel"]
+[node name="DrawBackground" type="Panel" parent="Backdrop/CenterPanel" unique_id=758921900]
+layout_mode = 0
 offset_left = 200.0
 offset_top = 20.0
 offset_right = 600.0
 offset_bottom = 420.0
-mouse_filter = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_drawbg")
 
-[node name="DrawingContainer" type="Node2D" parent="Backdrop/CenterPanel/DrawBackground"]
+[node name="DrawingContainer" type="Node2D" parent="Backdrop/CenterPanel/DrawBackground" unique_id=1445298315]
 
-[node name="TimerLabel" type="Label" parent="Backdrop/CenterPanel"]
+[node name="TimerLabel" type="Label" parent="Backdrop/CenterPanel" unique_id=252785288]
+layout_mode = 0
 offset_left = 200.0
 offset_top = 428.0
 offset_right = 600.0
 offset_bottom = 452.0
-text = "Temps : 0.0s"
 theme_override_font_sizes/font_size = 14
+text = "Temps : 0.0s"
 horizontal_alignment = 2
 
-[node name="ResultLabel" type="Label" parent="Backdrop/CenterPanel"]
+[node name="ResultLabel" type="Label" parent="Backdrop/CenterPanel" unique_id=263622497]
+layout_mode = 0
 offset_left = 200.0
 offset_top = 456.0
 offset_right = 600.0
 offset_bottom = 480.0
-text = "Dessine le kanji puis clique sur Valider."
 theme_override_font_sizes/font_size = 16
+text = "Dessine le kanji puis clique sur Valider."
 horizontal_alignment = 1
 
-[node name="ValidateButton" type="Button" parent="Backdrop/CenterPanel"]
+[node name="ValidateButton" type="Button" parent="Backdrop/CenterPanel" unique_id=650932277]
+layout_mode = 0
 offset_left = 220.0
 offset_top = 490.0
 offset_right = 340.0
 offset_bottom = 530.0
 text = "Valider"
 
-[node name="ClearButton" type="Button" parent="Backdrop/CenterPanel"]
+[node name="ClearButton" type="Button" parent="Backdrop/CenterPanel" unique_id=883917270]
+layout_mode = 0
 offset_left = 360.0
 offset_top = 490.0
 offset_right = 460.0
 offset_bottom = 530.0
 text = "Effacer"
 
-[node name="CancelButton" type="Button" parent="Backdrop/CenterPanel"]
+[node name="CancelButton" type="Button" parent="Backdrop/CenterPanel" unique_id=95405455]
+layout_mode = 0
 offset_left = 470.0
 offset_top = 490.0
 offset_right = 560.0
