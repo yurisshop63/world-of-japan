@@ -4,7 +4,7 @@
 > Objectif : qu'une nouvelle session (ou un autre worker) puisse reprendre sans que l'humain ait à tout réexpliquer.
 
 **Dernière mise à jour :** 2026-08-21
-**Dernier commit poussé :** `d51b232`
+**Dernier commit poussé :** `f7ab2a6`
 
 ---
 
@@ -162,9 +162,72 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 	  (rotation Y), `toggle_stick()` active puis se désactive quand la cible
 	  devient nulle, fenêtre instanciée avec 2 actions listées. Lancement complet
 	  `--quit-after 6` : aucun script error ni warning.
+- [x] **Autoload MobileInput** (`res://autoload/mobile_input.gd`, déclaré dans
+	  `project.godot`) : source de vérité de l'input tactile. API : variable
+	  publique `move_vector: Vector2` (repère écran : x = droite +, y = bas + ;
+	  (0,0) = relâché, magnitude 1 = poussé au max) et `active: bool`. Écrit par
+	  le joystick, lu par `player.gd` chaque frame.
+- [x] **Joystick virtuel** (`res://ui/virtual_joystick.gd/.tscn`) : Control avec
+	  base (cercle fixe, `_draw()`) + stick (cercle qui suit le doigt, rayon
+	  limité `MAX_OFFSET = 36`). Écrit `MobileInput.move_vector` (clampé +
+	  normalisé) à chaque mouvement. Gère souris (PC) et tactile (Android).
+- [x] **Combinaison d'input dans `player.gd::_physics_process`** : le
+	  `MobileInput.move_vector` est ADDITIONNÉ à l'input clavier existant
+	  (`input_dir.x += mv.x`, `input_dir.z += mv.y`) puis le tout est normalisé —
+	  le clavier reste fonctionnel, les deux sources se combinent.
+- [x] **Boutons FACE/STICK** autour du joystick (en arc à droite du cercle, hors
+	  du rayon du stick) : FACE → `Player.face()`, STICK → `Player.toggle_stick()`
+	  (récupération du Player via `get_node_or_null("Main/Player")`, même pattern
+	  que macro_bar.gd/skill_bar.gd). Le bouton STICK affiche un état visuel
+	  (vert = actif, sombre = inactif) reflétant `Player.sticking` (mis à jour en
+	  `_process`, style réappliqué seulement si l'état change).
+- [x] **Positionnement opposé au menu + synchronisation croisée** (étape la plus
+	  délicate, testée dans les deux sens) :
+	  - Le joystick est TOUJOURS positionné du côté opposé à `MenuConfig.side`
+	    (source de vérité unique, voir section "Étape 1" ci-dessous).
+	  - Il écoute `MenuConfig.config_changed` → `_apply_opposite_side()`.
+	  - Drag du joystick (long-press-then-drag, mêmes `long_press_time = 0.35` /
+	    `drag_threshold = 14.0` que draggable_button.gd) : si le joystick relâché
+	    est de l'autre côté de la moitié d'écran, il appelle
+	    `MenuConfig.set_side(_opposite(released_side))` — même API que le drag du
+	    menu lui-même, pas de logique dupliquée. Un flag `_ignore_next_config`
+	    empêche le joystick de se re-repositionner aussitôt après son propre drag.
+	  - Réciproque : si le MENU est dragué (menu_root_button.gd existant → 
+	    `MenuConfig.set_side`), `config_changed` est émis → le joystick bascule
+	    automatiquement de côté. Résultat : menu et joystick TOUJOURS opposés,
+	    quel que soit celui qu'on déplace.
+	  - **Choix (étape 4.4)** : PAS de position fine persistante du joystick.
+	    Position = côté opposé au menu (recalculée à chaque bascule/redim),
+	    repositionnement libre du drag temporaire (perdu au prochain basculement).
+	    Cohérent avec le menu (qui n'a pas de position fine non plus). Pas de
+	    nouveau fichier de config : la source de vérité reste `MenuConfig.side`
+	    (déjà persisté dans `user://menu_config.cfg`).
+- [x] **Intégration `main.tscn`** : instance `VirtualJoystick` ajoutée comme
+	  enfant du CanvasLayer `UI` (à côté de MacroBar, TopRightMenu, GridOverlay,
+	  bouton MENU), positionnée par défaut à l'opposé du bouton MENU.
+- [x] **Validation joystick** (headless, autoload temporaire retiré ensuite) :
+	  joystick instancié dans UI ; `move_vector(0,-1)` → vélocité XZ du joueur ≠ 0,
+	  reset → immobile ; `MenuConfig.set_side` → joystick bascule côté opposé ;
+	  drag simulé du joystick de l'autre côté → `MenuConfig.side` bascule (sens
+	  joystick→menu) ; boutons FACE/STICK présents. Lancement complet
+	  `--quit-after 6` : aucun script error ni warning.
 
 ## 🚧 En cours
 - [ ] _(aucun blocage actif)_
+
+### 🕹️ Session mobile (joystick virtuel) — source de vérité du "côté" (Étape 1)
+Identifié AVANT de coder le joystick. Le "côté" du menu circulaire (gauche/droite)
+est stocké et exposé UNIQUEMENT par l'autoload `MenuConfig` :
+- **Variable** : `MenuConfig.side` (int, `enum Side { RIGHT, LEFT }`, défaut `RIGHT`).
+- **Méthode pour le lire** : accès direct `MenuConfig.side` (pas de getter).
+- **Méthode pour le changer** : `MenuConfig.set_side(new_side)` — idempotent,
+  sauvegarde dans `user://menu_config.cfg` + émet `config_changed`.
+- **Signal émis au changement** : `MenuConfig.config_changed`.
+- Le menu se repositionne sur ce signal (`menu_root_button.gd::_on_config_changed` →
+  `_snap_to_side`).
+Toute cette session RÉUTILISE cette source de vérité (le joystick lit
+`MenuConfig.side`, appelle `MenuConfig.set_side()` pour basculer, écoute
+`config_changed`). AUCUNE seconde source de vérité créée.
 
 ## 📋 À faire ensuite (priorité)
 1. Phase 1 : quête simple, loot, inventaire, XP = précision × vitesse moyen du combat
@@ -177,8 +240,9 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
    pour l'Alpha). TODO clair : ajouter un LineEdit + parser les commandes `/...`
    qui appellent `Player.face()` / `Player.toggle_stick()` (les fonctions sont déjà
    publiques et prêtes à être réutilisées par les boutons mobiles aussi).
-4. Contrôle mobile (joystick + boutons) — session séparée prévue : réutiliser
-   `face()`, `toggle_stick()` et `KeybindConfig` pour les boutons à l'écran.
+4. Contrôle mobile — **joystick + boutons FACE/STICK FAITS cette session**
+   (`ui/virtual_joystick.gd/.tscn`, autoload MobileInput). Reste éventuel :
+   boutons de skills mobiles, tests réels sur Android.
 
 ---
 
@@ -196,9 +260,14 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
   primitives low-poly). `main.tscn` — 21 instances (3 par type).
 - `autoload/keybind_config.gd` — autoload KeybindConfig : actions face/stick,
   touches par défaut C/V, `user://keybinds.cfg`.
+- `autoload/mobile_input.gd` — autoload MobileInput : `move_vector` (input
+  tactile) lu par player.gd, écrit par le joystick.
 - `ui/keybind_window.gd` / `.tscn` — fenêtre de réassignement des touches
   (ouverte via le menu circulaire, action id=5 "Raccourcis").
-- `player.gd` — `face()`, `toggle_stick()`/`_process_stick()` (état `sticking`).
+- `ui/virtual_joystick.gd` / `.tscn` — joystick virtuel mobile + boutons
+  FACE/STICK, positionné à l'opposé du menu (synchro croisée).
+- `player.gd` — `face()`, `toggle_stick()`/`_process_stick()` (état `sticking`),
+  combinaison input clavier + `MobileInput.move_vector`.
 - `CREDITS.md` — attribution KanjiVG (licence CC BY-SA 3.0).
 - `World_of_Japan_Roadmap.md` — feuille de route (Phase 0 cochée partiellement).
 
@@ -251,6 +320,27 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 - **Macros texte (/face, /stick) NON implémentées** (étape 3 optionnelle) — voir
   "À faire ensuite" pour le TODO. Les raccourcis clavier directs suffisent pour
   l'Alpha.
+- **Source de vérité du "côté" = `MenuConfig.side` SEULE** (identifié étape 1 de
+  la session joystick) : variable `side` (enum `Side { RIGHT, LEFT }`),
+  `set_side()` pour changer (sauvegarde + émet `config_changed`), signal
+  `config_changed` pour écouter. Le menu ET le joystick s'y branchent. Ne pas
+  créer de second champ "side" ailleurs (ex: joystick doit TOUJOURS lire
+  `MenuConfig.side`, jamais sa propre variable de côté persistée).
+- **Synchro croisée menu/joystick** (mécanisme) : le joystick est à
+  `_opposite_side()` de `MenuConfig.side`. Drag joystick qui franchit la moitié
+  d'écran → `MenuConfig.set_side(_opposite(released_side))` (même API que le
+  drag du menu, pas de logique dupliquée) + flag `_ignore_next_config` pour ne
+  pas se re-positionner soi-même. Drag du menu → `config_changed` → le joystick
+  bascule automatiquement. Les deux restent TOUJOURS opposés.
+- **Joystick : pas de position fine persistante** (choix étape 4.4) : la position
+  est recalculée à chaque bascule/redimensionnement (côté opposé au menu, bas de
+  l'écran). Le drag libre est temporaire. Si un jour on veut une position fine
+  persistante, l'ajouter dans un `user://mobile_ui.cfg` (nouveau) et la relier à
+  la synchro croisée (miroir lors d'un basculement de côté).
+- **Input mobile combiné, pas remplacé** : `player.gd` ADDITIONNE
+  `MobileInput.move_vector` à l'input clavier puis normalise. Le mapping écran →
+  monde : `x` (écran) → axe X (strafe), `y` (écran, bas=+) → `z` (avant = -z) ;
+  `mv.y < -0.5` = pousser vers l'avant (active le multiplicateur de vitesse).
 - TODO Phase 1 laissé en commentaire : XP finale = produit précision × vitesse du
   combat (score moyen des kanji utilisés).
 
@@ -282,7 +372,10 @@ instancier `res://kanji/kanji_draw_popup.tscn` puis `open()`. Pour tester les mo
 instancier `mob.tscn`, régler `mob_type`, appeler `take_damage()`. Pour tester les
 commandes : `Player.face()`, `Player.toggle_stick()` (avec `TargetSystem.select(mob)`
 au préalable). Fenêtre raccourcis : ouvrir le menu circulaire (bouton MENU) puis
-l'action "Raccourcis", ou appeler `WindowManager.open_action(5)`. Pour la console :
+l'action "Raccourcis", ou appeler `WindowManager.open_action(5)`. Joystick : présent
+dans `main.tscn` (enfant UI), utiliser la souris pour le stick ; `MobileInput.move_vector`
+est lu par player.gd. Test synchro croisée : draguer le joystick de l'autre côté →
+le menu bascule (et inversement). Pour la console :
 lancer `chcp 65001` avant (sinon kanji mal affichés, codepage 850).
 
 ---

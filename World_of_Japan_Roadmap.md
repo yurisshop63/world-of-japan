@@ -279,6 +279,8 @@ d'investir dans le contenu à l'échelle.
 - ✅ `SkillBar` (9 slots, kanji 水/土/火/風, dégâts précision × vitesse) + `MacroBar` UI
 - ✅ `PlayerStats` (vie, mana, XP par bulles façon DAoC, XP PvP séparée)
 - ✅ Menu circulaire complet, déplaçable, sauvegardé
+- ✅ Contrôle mobile de base : joystick virtuel + boutons FACE/STICK,
+      synchro croisée avec le menu (opposés en permanence)
 - ❌ Pas de quête, pas de loot, pas d'inventaire
 - ⚠️ Pas de dépôt git détecté dans l'archive — à confirmer/créer
 
@@ -325,6 +327,12 @@ d'investir dans le contenu à l'échelle.
 - [ ] Feedback de level up visible (le système de bulles existe déjà)
 
 ## Phase 2 — Test utilisateur / confort
+- [x] Contrôle mobile de base — **fait** : joystick virtuel de déplacement
+      (`ui/virtual_joystick.gd/.tscn`) + boutons FACE/STICK, autoload
+      MobileInput, positionné à l'opposé du menu circulaire avec synchronisation
+      croisée (menu ↔ joystick toujours opposés, drag du joystick pour le
+      repositionner + basculer le menu). Test réel Android : reste à faire.
+- [ ] Boutons de skills mobiles (slots 1-4) à l'écran (réutiliser SkillBar)
 - [ ] Onboarding minimal (comment dessiner, comment viser)
 - [ ] Ajustement de la difficulté du scoring (seuil de réussite, tolérance)
 - [ ] Export buildable (Android ou Web selon préférence) pour tester hors éditeur
