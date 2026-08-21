@@ -4,7 +4,7 @@
 > Objectif : qu'une nouvelle session (ou un autre worker) puisse reprendre sans que l'humain ait à tout réexpliquer.
 
 **Dernière mise à jour :** 2026-08-21
-**Dernier commit poussé :** `89c5141`
+**Dernier commit poussé :** `d51b232`
 
 ---
 
@@ -128,14 +128,14 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 - [x] **Commandes de combat façon DAoC** (`player.gd`) :
 	  - **FACE** (`face()`) : oriente instantanément le joueur vers
 	    `TargetSystem.current_target` (rotation Y seule via `look_at`, pas
-	    d'animation). Ne fait rien si aucune cible (log discret, pas d'erreur).
+		d'animation). Ne fait rien si aucune cible (log discret, pas d'erreur).
 	  - **STICK** (`toggle_stick()` / état `sticking`, logique dans
 	    `_physics_process` → `_process_stick()`) : suit automatiquement la cible
 	    en maintenant la portée de mêlée `MELEE_RANGE = 1.5` (même valeur que
 	    `mob.gd: melee_range`) et en restant face à elle. Désactivation
-	    automatique si la cible meurt / devient nulle (via le check d'invalidité),
-	    ou si le joueur rappuie (toggle). Respecte la gravité/collision existante
-	    de `player.gd` (n'écrase que la vélocité XZ, comme `_process_chase` de
+		automatique si la cible meurt / devient nulle (via le check d'invalidité),
+		ou si le joueur rappuie (toggle). Respecte la gravité/collision existante
+		de `player.gd` (n'écrase que la vélocité XZ, comme `_process_chase` de
 	    mob.gd). Implémenté comme **état sur player.gd** (pas de script séparé qui
 	    dupliquerait le mouvement).
 - [x] **Autoload KeybindConfig** (`res://autoload/keybind_config.gd`, déclaré dans
