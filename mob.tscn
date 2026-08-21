@@ -1,0 +1,52 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://mob.gd" id="1_mob"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_mob"]
+size = Vector3(0.6, 1.0, 0.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_mob"]
+size = Vector3(0.6, 1.0, 0.6)
+
+[sub_resource type="StandardMaterial3D" id="Material_mob_body"]
+albedo_color = Color(0.6, 0.2, 0.2, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_bg"]
+size = Vector2(0.8, 0.15)
+
+[sub_resource type="StandardMaterial3D" id="Material_bar_bg"]
+shading_mode = 2
+albedo_color = Color(0.1, 0.1, 0.1, 1)
+billboard_mode = 1
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_fill"]
+size = Vector2(0.8, 0.15)
+
+[sub_resource type="StandardMaterial3D" id="Material_bar_fill"]
+shading_mode = 2
+albedo_color = Color(0.2, 0.9, 0.2, 1)
+billboard_mode = 1
+
+[node name="Mob" type="CharacterBody3D"]
+script = ExtResource("1_mob")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.5, 0)
+mesh = SubResource("BoxMesh_mob")
+surface_material_override/0 = SubResource("Material_mob_body")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.5, 0)
+shape = SubResource("BoxShape3D_mob")
+
+[node name="HealthBar" type="Node3D" parent="."]
+position = Vector3(0, 1.3, 0)
+
+[node name="Background" type="MeshInstance3D" parent="HealthBar"]
+mesh = SubResource("PlaneMesh_bg")
+surface_material_override/0 = SubResource("Material_bar_bg")
+
+[node name="Fill" type="MeshInstance3D" parent="HealthBar"]
+position = Vector3(0, 0, 0.001)
+mesh = SubResource("PlaneMesh_fill")
+surface_material_override/0 = SubResource("Material_bar_fill")

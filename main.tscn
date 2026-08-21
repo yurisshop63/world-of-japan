@@ -1,0 +1,231 @@
+[gd_scene format=3 uid="uid://bpmksy2c7s1u5"]
+
+[ext_resource type="Script" uid="uid://ii53rmlt6uuk" path="res://main.gd" id="1_main"]
+[ext_resource type="Script" uid="uid://dkwv51v7b4d1n" path="res://HexagonalGround.gd" id="2_272bh"]
+[ext_resource type="Script" uid="uid://cqefoy1jai5t5" path="res://player.gd" id="2_player"]
+[ext_resource type="PackedScene" path="res://mob.tscn" id="3_mob"]
+[ext_resource type="Script" uid="uid://dmo0re8b0ckf5" path="res://summary_panel.gd" id="4_summary"]
+[ext_resource type="Script" uid="uid://dnpfbljjsndnc" path="res://macro_bar.gd" id="5_macro"]
+[ext_resource type="Script" uid="uid://bty0y2e6qhq3b" path="res://title_bar_drag.gd" id="6_titledrag"]
+[ext_resource type="Script" uid="uid://1lj121lu0b4n" path="res://GridOverlay.gd" id="9_kek77"]
+[ext_resource type="Script" uid="uid://dngx1ayw0tab6" path="res://menu_root_button.gd" id="10_4c57u"]
+[ext_resource type="Script" uid="uid://cso4uo2guamc1" path="res://top_right_menu.gd" id="11_topmenu"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
+radius = 0.3
+height = 1.8
+
+[sub_resource type="BoxMesh" id="BoxMesh_torso"]
+size = Vector3(0.4, 0.6, 0.25)
+
+[sub_resource type="BoxMesh" id="BoxMesh_head"]
+size = Vector3(0.3, 0.3, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_arm"]
+size = Vector3(0.12, 0.5, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_leg"]
+size = Vector3(0.15, 0.6, 0.15)
+
+[sub_resource type="GDScript" id="GDScript_kek77"]
+script/source = "extends CanvasLayer
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	pass # Replace with function body.
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta: float) -> void:
+	pass
+"
+
+[node name="Main" type="Node3D" unique_id=904192149]
+script = ExtResource("1_main")
+
+[node name="HexGround" type="Node3D" parent="." unique_id=350043936]
+script = ExtResource("2_272bh")
+material_color = Color(0, 1, 1, 1)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1946045742]
+transform = Transform3D(0.8660254, 0.35355338, -0.35355338, 0, 0.70710677, 0.70710677, 0.5, -0.6123724, 0.6123724, 0, 5, 0)
+
+[node name="Player" type="CharacterBody3D" parent="." unique_id=122479755]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
+script = ExtResource("2_player")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=239103593]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_player")
+
+[node name="Model" type="Node3D" parent="Player" unique_id=1394741037]
+
+[node name="Torso" type="MeshInstance3D" parent="Player/Model" unique_id=18846115]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+mesh = SubResource("BoxMesh_torso")
+
+[node name="Head" type="MeshInstance3D" parent="Player/Model" unique_id=676215371]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 0)
+mesh = SubResource("BoxMesh_head")
+
+[node name="LeftArmPivot" type="Node3D" parent="Player/Model" unique_id=1825234604]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.32, 1.3, 0)
+
+[node name="LeftArm" type="MeshInstance3D" parent="Player/Model/LeftArmPivot" unique_id=5208820]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
+mesh = SubResource("BoxMesh_arm")
+
+[node name="RightArmPivot" type="Node3D" parent="Player/Model" unique_id=661723271]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.32, 1.3, 0)
+
+[node name="RightArm" type="MeshInstance3D" parent="Player/Model/RightArmPivot" unique_id=1303756933]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
+mesh = SubResource("BoxMesh_arm")
+
+[node name="LeftLegPivot" type="Node3D" parent="Player/Model" unique_id=421272263]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.15, 0.8, 0)
+
+[node name="LeftLeg" type="MeshInstance3D" parent="Player/Model/LeftLegPivot" unique_id=1286451393]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+mesh = SubResource("BoxMesh_leg")
+
+[node name="RightLegPivot" type="Node3D" parent="Player/Model" unique_id=614091526]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15, 0.8, 0)
+
+[node name="RightLeg" type="MeshInstance3D" parent="Player/Model/RightLegPivot" unique_id=108400792]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+mesh = SubResource("BoxMesh_leg")
+
+[node name="CameraPivot" type="Node3D" parent="Player" unique_id=1952840779]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
+
+[node name="Camera3D" type="Camera3D" parent="Player/CameraPivot" unique_id=1549459141]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 5)
+
+[node name="Mob" parent="." unique_id=1369254688 instance=ExtResource("3_mob")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 40)
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=1230186980]
+script = SubResource("GDScript_kek77")
+
+[node name="SummaryPanel" type="Panel" parent="UI" unique_id=1517284105]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -320.0
+offset_top = -215.0
+script = ExtResource("4_summary")
+
+[node name="HealthBar" type="ProgressBar" parent="UI/SummaryPanel" unique_id=1276121598]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 290.0
+offset_bottom = 30.0
+
+[node name="PowerBar" type="ProgressBar" parent="UI/SummaryPanel" unique_id=2132948981]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 35.0
+offset_right = 290.0
+offset_bottom = 55.0
+
+[node name="XpBubbles" type="HBoxContainer" parent="UI/SummaryPanel" unique_id=1433262543]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 60.0
+offset_right = 290.0
+offset_bottom = 80.0
+
+[node name="XpBar" type="ProgressBar" parent="UI/SummaryPanel" unique_id=974916155]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 85.0
+offset_right = 290.0
+offset_bottom = 100.0
+
+[node name="PvpXpBubbles" type="HBoxContainer" parent="UI/SummaryPanel" unique_id=675491944]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 110.0
+offset_right = 290.0
+offset_bottom = 130.0
+
+[node name="PvpXpBar" type="ProgressBar" parent="UI/SummaryPanel" unique_id=1731639128]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 135.0
+offset_right = 290.0
+offset_bottom = 150.0
+
+[node name="TargetHealthBar" type="ProgressBar" parent="UI/SummaryPanel" unique_id=1283759585]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 175.0
+offset_right = 290.0
+offset_bottom = 195.0
+
+[node name="MacroBar" type="Control" parent="UI" unique_id=1297647621]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 20.0
+offset_bottom = 20.0
+script = ExtResource("5_macro")
+
+[node name="TitleBar" type="Panel" parent="UI/MacroBar" unique_id=1735938388]
+layout_mode = 0
+offset_right = 250.0
+offset_bottom = 20.0
+script = ExtResource("6_titledrag")
+
+[node name="SlotsContainer" type="Control" parent="UI/MacroBar" unique_id=633615226]
+anchors_preset = 0
+offset_top = 20.0
+offset_bottom = 20.0
+
+[node name="TopRightMenu" type="Control" parent="UI" unique_id=1463695902]
+visible = false
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -80.0
+offset_top = 20.0
+offset_right = -15.0
+offset_bottom = 100.0
+grow_horizontal = 0
+script = ExtResource("11_topmenu")
+
+[node name="MenuButton" type="Button" parent="UI/TopRightMenu" unique_id=1648376488]
+visible = false
+layout_mode = 0
+offset_right = 65.0
+offset_bottom = 40.0
+text = "Petit Menu"
+
+[node name="MenuPanel" type="Panel" parent="UI/TopRightMenu" unique_id=219789588]
+visible = false
+layout_mode = 0
+offset_top = 45.0
+offset_right = 65.0
+offset_bottom = 165.0
+
+[node name="GridOverlay" type="Control" parent="UI" unique_id=1169902166]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("9_kek77")
+
+[node name="Button" type="Button" parent="UI" unique_id=87184341]
+offset_right = 8.0
+offset_bottom = 8.0
+script = ExtResource("10_4c57u")
