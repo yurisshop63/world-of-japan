@@ -4,7 +4,7 @@
 > Objectif : qu'une nouvelle session (ou un autre worker) puisse reprendre sans que l'humain ait à tout réexpliquer.
 
 **Dernière mise à jour :** 2026-08-21
-**Dernier commit poussé :** `7a5e9e3`
+**Dernier commit poussé :** `89c5141`
 
 ---
 
