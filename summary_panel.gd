@@ -7,6 +7,7 @@ extends Panel
 @onready var pvp_xp_bubbles = $PvpXpBubbles
 @onready var pvp_xp_bar = $PvpXpBar
 @onready var target_health_bar = $TargetHealthBar
+@onready var target_name_label = $TargetNameLabel
 
 var dragging = false
 var drag_offset = Vector2.ZERO
@@ -33,10 +34,13 @@ func _ready():
 func _process(_delta):
 	var target = TargetSystem.current_target
 	if target != null and is_instance_valid(target):
+		target_name_label.visible = true
+		target_name_label.text = target.get_display_name()
 		target_health_bar.visible = true
 		target_health_bar.max_value = target.max_health
 		target_health_bar.value = target.health
 	else:
+		target_name_label.visible = false
 		target_health_bar.visible = false
 
 func _build_bubbles(container):

@@ -42,6 +42,29 @@ const DROP_TABLE := {
 	MobType.SOLEIL:{"item_id": "rayon_soleil",  "chance": 0.25},
 }
 
+# --- Noms d'affichage (UI de target / quête) ------------------------------
+# Kanji réutilisés de KANJI_DATA (skill_bar.gd) pour la cohérence pédagogique
+# (Feu/Eau/Terre/Lune/Bois/Or/Soleil = 火水土月木金日, thème 曜日).
+const MOB_NAMES := {
+	MobType.FEU:   "Feu (火)",
+	MobType.EAU:   "Eau (水)",
+	MobType.TERRE: "Terre (土)",
+	MobType.LUNE:  "Lune (月)",
+	MobType.BOIS:  "Bois (木)",
+	MobType.OR:    "Or (金)",
+	MobType.SOLEIL:"Soleil (日)",
+}
+
+## Nom d'affichage d'un type de mob (statique : utilisable sans instance,
+## ex. par QuestSystem/quest_tracker pour le libellé de l'objectif).
+static func mob_name(mob_type: int) -> String:
+	return MOB_NAMES.get(mob_type, "?")
+
+
+## Nom d'affichage de CETTE instance (lu par l'UI de target).
+func get_display_name() -> String:
+	return mob_name(mob_type)
+
 enum State { IDLE, CHASE, RETURN, DEAD }
 var state = State.IDLE
 

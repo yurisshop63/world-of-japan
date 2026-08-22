@@ -250,6 +250,14 @@ offset_top = 175.0
 offset_right = 290.0
 offset_bottom = 195.0
 
+[node name="TargetNameLabel" type="Label" parent="UI/SummaryPanel" unique_id=1283759586]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 152.0
+offset_right = 290.0
+offset_bottom = 172.0
+theme_override_font_sizes/font_size = 16
+
 [node name="MacroBar" type="Control" parent="UI" unique_id=1297647621]
 layout_mode = 3
 anchors_preset = 0

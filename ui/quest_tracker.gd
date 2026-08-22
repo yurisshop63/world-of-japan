@@ -66,6 +66,6 @@ func _refresh() -> void:
 		_progress_label.text = ""
 		return
 	_name_label.text = str(quest.get("name", "?"))
-	_progress_label.text = "Élimine %d mobs : %d / %d" % [
-		QuestSystem.required_count(), QuestSystem.progress, QuestSystem.required_count(),
+	_progress_label.text = "%s : %d / %d" % [
+		QuestSystem.objective_text(), QuestSystem.progress, QuestSystem.required_count(),
 	]

@@ -10,6 +10,9 @@ extends Node
 signal quest_progress(quest_id: int, current: int, required: int)
 signal quest_completed(quest_id: int)
 
+# Pour le nom d'affichage du mob visé (mob.gd::mob_name, MOB_NAMES).
+const MobScript := preload("res://mob.gd")
+
 ## Type de mob visé par une quête (mêmes valeurs que mob.gd:MobType) :
 ## 0=火 Feu, 1=水 Eau, 2=土 Terre, 3=月 Lune, 4=木 Bois, 5=金 Or, 6=日 Soleil.
 const MOB_FEU := 0
@@ -65,6 +68,19 @@ func required_count() -> int:
 	var quest := get_quest(active_quest_id)
 	var objective: Dictionary = quest.get("objective", {})
 	return int(objective.get("count", 0))
+
+
+## Nom d'affichage du type de mob visé (via mob.gd::MOB_NAMES, ex "Eau (水)").
+## Aucun entier brut de mob_type n'est exposé à l'UI.
+func objective_target_name() -> String:
+	var quest := get_quest(active_quest_id)
+	var objective: Dictionary = quest.get("objective", {})
+	return MobScript.mob_name(int(objective.get("mob_type", -1)))
+
+
+## Libellé de l'objectif affiché par le QuestTracker, ex "Élimine 5 «Eau (水)»".
+func objective_text() -> String:
+	return "Élimine %d %s" % [required_count(), objective_target_name()]
 
 
 func _complete_quest(quest: Dictionary) -> void:
