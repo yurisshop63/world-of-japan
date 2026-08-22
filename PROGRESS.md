@@ -359,7 +359,7 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 - [x] **Session "noms de mobs → UI target + quête"** : le cadre de target
 	  affiche le nom du mob et le QuestTracker précise quel mob tuer.
 	  - `mob.gd` : const `MOB_NAMES` (`MobType` → String, ex "Feu (火)",
-	    "Eau (水)"...) — **kanji réutilisés de `KANJI_DATA` (skill_bar.gd)** pour
+		"Eau (水)"...) — **kanji réutilisés de `KANJI_DATA` (skill_bar.gd)** pour
 	    la cohérence pédagogique (火水±月木金日, thème 曜日). API :
 	    `get_display_name()` (instance, lu par l'UI de target) + `mob_name(mob_type)`
 	    (statique, utilisable sans instance par la quête).
@@ -368,16 +368,81 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 	    `_process()` affiche `target.get_display_name()` + masque le label sans
 	    cible (même visibilité que la barre de vie).
 	  - `quest_system.gd` : `objective_target_name()` (via `mob.gd::mob_name`,
-	    preload `MobScript`) + `objective_text()` → "Élimine 5 Eau (水)". Plus
+		preload `MobScript`) + `objective_text()` → "Élimine 5 Eau (水)". Plus
 	    AUCUN entier brut de `mob_type` n'est exposé à l'UI.
 	  - `quest_tracker.gd::_refresh()` : `_progress_label` = `objective_text()`
-	    + " : x / N" (précise le mob à tuer).
+		+ " : x / N" (précise le mob à tuer).
 	  - Validation headless (autoload temporaire retiré) : display name des 7
 	    types (Feu (火)…Soleil (日)), statique sans instance, `objective_text()`
-	    = "Élimine 5 Eau (水)", label de target rempli ("Feu (火)") puis masqué à
+		= "Élimine 5 Eau (水)", label de target rempli ("Feu (火)") puis masqué à
 	    la désélection. **TOUT OK.** Lancement complet `--quit-after 6` : aucun
 	    script error ni warning. Ni DROP_TABLE, ni scoring kanji, ni formule de
 	    dégâts touchés.
+- [x] **Session "Tickets 1→11" (brief chef de projet)** — corrections + nouvelles
+	  fonctionnalités. Validation headless complète (47 assertions TOUT OK).
+	  - **[T1, CRITIQUE] chemin Windows codé en dur** : `menu_root_button.gd:10`
+	    préloadait `C:/Users/naomi/.../menu_slot_button.gd` → remplacé par
+	    `res://menu_slot_button.gd`. Le projet se lance sur n'importe quelle
+	    machine.
+	  - **[T2] documentation** : `README.md` et `project_structure.md` décrivaient
+	    une arborescence `res://autoload/menu_config.gd` / `res://ui/menu/...`
+	    qui n'existe pas (scripts à plat à la racine). Corrigés avec les vrais
+	    chemins ; convention de grille documentée (24×11, lignes A→K de haut en
+	    bas, colonnes 1→24 **de droite à gauche**) + helpers `MenuLayout`.
+	  - **[T3] un seul menu** : suppression de `top_right_menu.gd` (+.uid) et du
+	    node `UI/TopRightMenu` (MenuButton/MenuPanel) dans main.tscn, et de
+	    `button.gd` (+.uid), **troisième prototype orphelin non référencé** (vérifié
+	    par grep). Reste uniquement le menu circulaire déplaçable (`UI/Button`).
+	    `draggable_button.gd` (class_name DraggableButton) conservé.
+	  - **[T4] `Inventory.remove_item()`** : le docstring promettait "toute la pile
+	    si count <= 0" mais rien n'était retiré → désormais count <= 0 retire
+	    toute la pile (true si ≥1 exemplaire, false sinon) ; count > 0 inchangé.
+	  - **[T5] script fantôme** : le node `UI` (CanvasLayer) portait un
+	    `GDScript_kek77` vide (résidu d'éditeur) → retiré (sub_resource + `script=`
+	    du node), sans toucher à `GridOverlay` (id `9_kek77`).
+	  - **[T6] toggle des fenêtres du menu** : `window_manager.gd` réécrit —
+	    re-tap sur le même bouton referme, ouvrir une autre fenêtre ferme la
+	    précédente (`_current_action_id`/`_current_window`, `close_current()`).
+	    **Couche passée de 20 à 1** pour que le MENU (z10) et le sous-menu (z9,
+	    désormais ajouté au CanvasLayer UI) restent au-dessus des fenêtres (z0) —
+	    sinon impossible de re-taper un bouton au-dessus d'une fenêtre ouverte.
+	    Boutons "Fermer" d'Inventaire/Raccourcis/placeholder → `close_current()`.
+	  - **[T7] QuestTracker déplaçable** : le Panel passe en `mouse_filter = STOP`
+	    (root Control reste IGNORE), drag de `self` clampé à l'écran (pattern
+	    title_bar_drag.gd) ; + `toggle_visible()` pour T8.
+	  - **[T8] fenêtre Statistiques** : action `id:1` du menu (placeholder "2") →
+	    `"Statistiques"` + scène `res://ui/stats_window.tscn`. Nouveau helper
+	    `MenuLayout.rect_from_grid(vp, row_from, row_to, col_from, col_to)` (aile
+	    des helpers de grille existants) ; panneau A11→I3 (9×9 cases), coins
+	    arrondis, `z_index = 8` (au-dessus des fenêtres d'action z0, sous le MENU
+	    z10), **pas d'overlay plein écran** (root IGNORE, seul le panel STOP).
+	    Affiche les stats de `PlayerStats` (rafraîchi par signaux) + bouton
+	    "Quête" qui toggle le QuestTracker indépendamment.
+	  - **[T9] joystick ×1.5** : `RADIUS_BASE` 60→90, `RADIUS_STICK` 32→48,
+	    `MAX_OFFSET` 36→54, `WIDTH` 260→390, `HEIGHT` 160→240. `DEAD_ZONE`
+	    inchangé (fraction). BUTTON_SIZE/GAP traités au T10 (boutons orbitaux).
+	  - **[T10] boutons FACE/STICK orbitaux** : nouveau `res://ui/orbit_button.gd`
+	    (`class_name OrbitButton extends DraggableButton`) — drag long projeté sur
+	    le cercle de rayon `BUTTON_ORBIT_RADIUS = RADIUS_BASE + 40`, tap = action
+	    (signaux `tapped`/`angle_changed`). Projection via transform canvas du
+	    parent (Control n'a pas `to_local`/`to_global`). Angles persistés dans
+	    `MenuConfig` (`face_angle`/`stick_angle`, section `[joystick]` de
+	    `user://menu_config.cfg`) — défauts = positions d'origine.
+	  - **[T11] curseur caméra B13** : nouveau `res://ui/look_cursor.gd`
+	    (`UI/LookCursor` dans main.tscn) — "manche à balai" STICKY : la poignée
+	    ne revient PAS au centre au relâchement, la rotation continue tant que
+	    l'écart persiste (vitesse linéaire distance/`HANDLE_TRAVEL` ×
+	    `VITESSE_MAX_RAD_PAR_SEC`) ; relâcher dans `SNAPBACK_THRESHOLD` = snapback
+	    animé (0.12s) qui remet la vitesse à 0 **sans toucher à l'orientation**.
+	    Yaw via `player.gd::rotate_y` (axe du look souris), pitch via
+	    `camera_pivot.rotation.x` clampé **±90°** (propre limite, plus large que
+	    le look souris 70°). Exposé par `MobileInput.look_vector`/`look_active`,
+	    lu chaque frame par player.gd. `MenuLayout.rect_from_grid(vp,"B","B",13,13)`
+	    pour la position neutre.
+	  - **Question ouverte notée (etat_actuel.md)** : le look souris existant
+	    semble avoir le pitch inversé (souris vers le haut → caméra descend, car
+	    `pitch = +rotation.x` fait monter la caméra) ; le curseur B13 suit la
+	    spec (haut → caméra monte). À trancher en playtest — cf. etat_actuel.md.
 
 ## 🚧 En cours
 - [ ] _(aucun blocage actif)_
@@ -441,27 +506,47 @@ Toute cette session RÉUTILISE cette source de vérité (le joystick lit
 - `autoload/keybind_config.gd` — autoload KeybindConfig : actions face/stick,
   touches par défaut C/V, `user://keybinds.cfg`.
 - `autoload/mobile_input.gd` — autoload MobileInput : `move_vector` (input
-  tactile) lu par player.gd, écrit par le joystick.
+  tactile) lu par player.gd, écrit par le joystick ; `look_vector`/`look_active`
+  écrits par le curseur caméra (look_cursor.gd).
 - `ui/keybind_window.gd` / `.tscn` — fenêtre de réassignement des touches
   (ouverte via le menu circulaire, action id=5 "Raccourcis").
-- `ui/virtual_joystick.gd` / `.tscn` — joystick virtuel mobile + boutons
-  FACE/STICK, positionné à l'opposé du menu (synchro croisée).
+- `ui/virtual_joystick.gd` / `.tscn` — joystick virtuel mobile (×1.5 : base 90,
+  stick 48, offset max 54) + boutons FACE/STICK orbitaux (OrbitButton), posé à
+  l'opposé du menu (synchro croisée).
+- `ui/orbit_button.gd` — `class_name OrbitButton extends DraggableButton` :
+  bouton contraint à un cercle (projection sur l'orbite pendant le drag),
+  angle persisté via `MenuConfig.set_face_angle()`/`set_stick_angle()`.
+- `ui/look_cursor.gd` — curseur caméra B13 "manche à balai" (sticky, snapback,
+  vitesse linéaire) → `MobileInput.look_vector`, lu par player.gd.
+- `ui/stats_window.gd` / `.tscn` — fenêtre Statistiques (grille A11→I3,
+  z_index 8, bouton "Quête" → `QuestTracker.toggle_visible()`).
+- `window_manager.gd` — autoload WindowManager : fenêtres d'action en **couche
+  canvas 1** + toggle (re-tap ferme, nouvelle ouverture remplace),
+  `close_current()` appelé par les boutons "Fermer".
+- `menu_layout.gd` — helpers de grille (class_name MenuLayout) : `rect_from_right`,
+  **`rect_from_grid(vp, "A", "I", 3, 11)`** (lignes par lettre + colonnes 1→24
+  depuis la droite), miroir, rects menu/slots.
 - `autoload/inventory.gd` — autoload Inventory : inventaire minimal (liste),
-  `ITEM_DEFS` (7 items 曜日), add/remove/get_count, signal `inventory_changed`.
+  `ITEM_DEFS` (7 items 曜日), add/remove/get_count (`remove_item` retire toute
+  la pile si count <= 0), signal `inventory_changed`.
 - `autoload/quest_system.gd` — autoload QuestSystem : quête "élimine 5 Eau",
   `on_mob_killed(mob_type)`, récompenses (XP + items), relance automatique.
   `objective_text()` → "Élimine 5 Eau (水)" (nom via `mob.gd::mob_name`, plus
   d'int brut exposé à l'UI).
 - `ui/quest_tracker.gd` — panneau de progression de quête (UI/QuestTracker dans
-  main.tscn), affiche `objective_text()` + " : x / N".
+  main.tscn), affiche `objective_text()` + " : x / N". **Déplaçable** (Panel
+  STOP, drag de `self`) + `toggle_visible()` (bouton "Quête" des Statistiques).
 - `ui/inventory_window.gd` / `.tscn` — fenêtre Inventaire (liste colorée par
   rareté), ouverte via le menu circulaire (action id=0 "Inventaire").
 - `summary_panel.gd` — UI du cadre de target : `TargetNameLabel` (nom du mob,
   `get_display_name()`) au-dessus de `TargetHealthBar`, masqués sans cible.
 - `player.gd` — `face()`, `toggle_stick()`/`_process_stick()` (état `sticking`),
-  combinaison input clavier + `MobileInput.move_vector`.
+  combinaison input clavier + `MobileInput.move_vector` + look curseur B13
+  (`MobileInput.look_vector` → yaw joueur / pitch `camera_pivot`, clamp ±90°).
 - `CREDITS.md` — attribution KanjiVG (licence CC BY-SA 3.0).
 - `World_of_Japan_Roadmap.md` — feuille de route (Phase 0 cochée partiellement).
+- _Supprimés (session tickets 1→11)_ : `top_right_menu.gd` (+.uid) — ancien menu
+  "Petit Menu" ; `button.gd` (+.uid) — prototype orphelin non référencé.
 
 ## ⚠️ Décisions / contraintes à ne pas oublier
 - **Temps réel pendant le dessin** : le monde ne se met PLUS en pause. Le mob
