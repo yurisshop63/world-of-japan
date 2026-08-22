@@ -320,17 +320,24 @@ d'investir dans le contenu à l'échelle.
       touches par défaut **C** / **V**, réassignables via la fenêtre Raccourcis
       du menu (KeybindConfig, `user://keybinds.cfg`). Macros texte `/...` tapées
       en chat : TODO (étape 3 optionnelle, non prioritaire)
-- [ ] Quête ultra simple ("élimine 5 Mob X" ou "récupère 3 items Y")
-- [ ] Loot basique (drop d'item au décès du mob, probabilité simple)
-- [ ] Inventaire minimal (liste, pas de grille sophistiquée)
-- [ ] Formule dégâts/XP liée au score kanji — **dégâts fait** (précision × vitesse),
-	  **XP restant** (précision × vitesse moyen du combat, TODO commenté)
-- [ ] Feedback de level up visible (le système de bulles existe déjà)
+- [x] Quête ultra simple — **fait** (session Phase 1) : quête "élimine 5 esprits
+	  d'eau (水)" (autoload QuestSystem, `QUESTS` = fiches, `on_mob_killed`),
+	  récompense 300 XP + 1 Pépite d'Or, relance automatique, panneau de
+	  progression à l'écran (QuestTracker)
+- [x] Loot basique — **fait** : `DROP_TABLE` par type de mob (7 types, Commun
+	  ~60% / Rare 25-30%), un lancer par mort, item → Inventory
+- [x] Inventaire minimal — **fait** : autoload Inventory (liste, merge/remove),
+	  fenêtre "Inventaire" ouverte via le menu circulaire, items colorés par rareté
+- [x] Formule dégâts/XP liée au score kanji — **dégâts fait** (précision × vitesse),
+	  **XP fait** (session Phase 1) : XP du kill = 50 × moyenne des
+	  précision × vitesse des kanji du combat (SkillBar accumule, mob consomme)
+- [x] Feedback de level up visible — **fait** : signal `PlayerStats.leveled_up`,
+	  bannière centrée "Niveau X !" (~2s)
 
 ## Phase 2 — Test utilisateur / confort
 - [x] Contrôle mobile de base — **fait** : joystick virtuel de déplacement
-      (`ui/virtual_joystick.gd/.tscn`) + boutons FACE/STICK, autoload
-      MobileInput, positionné à l'opposé du menu circulaire avec synchronisation
+	  (`ui/virtual_joystick.gd/.tscn`) + boutons FACE/STICK, autoload
+	  MobileInput, positionné à l'opposé du menu circulaire avec synchronisation
       croisée (menu ↔ joystick toujours opposés, drag du joystick pour le
       repositionner + basculer le menu). **Corrigé** (session écran de dessin) :
       dead zone 12% de MAX_OFFSET + reset au centre au relâchement (fin de la
@@ -338,8 +345,8 @@ d'investir dans le contenu à l'échelle.
 - [x] Écran de dessin ergonomique — **fait** (session écran de dessin) : carré
       de dessin ancré du côté du menu (repère GridOverlay B-J/1-9), 3 références
       de kanji au choix (clic pour sélectionner celle à dessiner), 3 boutons
-      ronds (Valider/Retour-dernier-trait/Effacer), plus d'assombrissement de
-      fond (le monde reste visible pendant le dessin).
+	  ronds (Valider/Retour-dernier-trait/Effacer), plus d'assombrissement de
+	  fond (le monde reste visible pendant le dessin).
 - [ ] Boutons de skills mobiles (slots 1-4) à l'écran (réutiliser SkillBar)
 - [ ] Onboarding minimal (comment dessiner, comment viser)
 - [ ] Ajustement de la difficulté du scoring (seuil de réussite, tolérance)

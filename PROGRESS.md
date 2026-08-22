@@ -220,14 +220,14 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 	  `player.gd` additionnait `mv` sans vérifier `MobileInput.active` → le joueur
 	  courait en permanence en diagonale avant-gauche. Corrigé :
 	  - `_reset_stick()` : stick visuel **instantanément au centre** (`_center()`),
-	    `move_vector = ZERO`, `active = false`, sans interpolation (appelé à
-	    `_end_press()` et au passage en mode drag).
+		`move_vector = ZERO`, `active = false`, sans interpolation (appelé à
+		`_end_press()` et au passage en mode drag).
 	  - **Dead zone** `DEAD_ZONE = 0.12` (12% de `MAX_OFFSET` = 36, soit ~4.3px) :
-	    tant que le doigt/curseur reste dans cette zone, `move_vector` reste à
-	    ZERO (le stick visuel peut bouger, l'input non). Anti-tremblement et
+		tant que le doigt/curseur reste dans cette zone, `move_vector` reste à
+		ZERO (le stick visuel peut bouger, l'input non). Anti-tremblement et
 	    anti-résidu au relâchement.
 	  - **Garde double** dans `player.gd::_physics_process` :
-	    `if MobileInput.active and mv.length() > 0.01:` — l'input mobile n'est
+		`if MobileInput.active and mv.length() > 0.01:` — l'input mobile n'est
 	    jamais additionné quand `active == false`.
 	  - Helper `_center()` centralisé (base du stick en coords locales).
 	  - Validation headless (autoload temporaire retiré) : dead zone au centre /
@@ -247,32 +247,32 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 	    miroir sur `MenuConfig.config_changed` (pattern `_apply_layout`, pas de
 	    logique dupliquée). Le joystick reste toujours côté opposé (inchangé).
 	  - **3 boutons d'action circulaires** en bas du carré, centrés verticalement
-	    (le gros Valider fixe la ligne) : **Valider** (vert, bas-droite, plus gros
-	    ≈ une case de grille → `drawing_validated(score, elapsed_ms)`) ;
-	    **Retour dernier trait** (orange, bas-centre, **undo unitaire** — retire
-	    UN trait de la pile `player_strokes` + son Line2D, ne fait rien si vide) ;
-	    **Effacer** (rouge, bas-gauche, reset complet). Le bouton **Annuler**
-	    global (fermeture, ESC) reste **séparé** (haut-droite du carré, gris).
+		(le gros Valider fixe la ligne) : **Valider** (vert, bas-droite, plus gros
+		≈ une case de grille → `drawing_validated(score, elapsed_ms)`) ;
+		**Retour dernier trait** (orange, bas-centre, **undo unitaire** — retire
+		UN trait de la pile `player_strokes` + son Line2D, ne fait rien si vide) ;
+		**Effacer** (rouge, bas-gauche, reset complet). Le bouton **Annuler**
+		global (fermeture, ESC) reste **séparé** (haut-droite du carré, gris).
 	  - **3 références de kanji au choix**, affichées **au-dessus et du côté
-	    opposé au menu** par rapport au carré (vers le centre de l'écran) :
+		opposé au menu** par rapport au carré (vers le centre de l'écran) :
 	    droitier → haut-gauche ; gaucher → haut-droite. Clic/tap sur une référence
 	    → elle devient le kanji actif (`_selected_index`), son `par_time_ms` est
 	    appliqué, et le scoring (`StrokeScoring`) se fait contre ELLE (pas contre
 	    un kanji fixe imposé). Surlignage vert de la référence sélectionnée.
 	    Le premier candidat (kanji du skill) est sélectionné par défaut.
 	  - **Suppression de l'assombrissement de fond** : plus aucun `ColorRect`
-	    semi-transparent. La racine est en `MOUSE_FILTER_IGNORE` (le monde 3D et
-	    le joystick restent visibles/interactifs, seuls les enfants STOP captent).
+		semi-transparent. La racine est en `MOUSE_FILTER_IGNORE` (le monde 3D et
+		le joystick restent visibles/interactifs, seuls les enfants STOP captent).
 	  - `open(candidates)` : nouvel argument = liste de dicts
-	    `{"svg","par_time_ms","name"}` (3 références). `skill_bar.gd` a gagné
-	    `_build_candidates(skill)` : kanji du skill + 2 autres tirés au hasard
-	    dans `KANJI_DATA` (TODO commenté : affiner la pertinence élémentaire,
-	    cf. ROADMAP point 2).
+		`{"svg","par_time_ms","name"}` (3 références). `skill_bar.gd` a gagné
+		`_build_candidates(skill)` : kanji du skill + 2 autres tirés au hasard
+		dans `KANJI_DATA` (TODO commenté : affiner la pertinence élémentaire,
+		cf. ROADMAP point 2).
 	  - Validation headless (autoload temporaire retiré) : carré droitier en
-	    B-J/1-9 (9×9 cases, bord droit, haut = ligne B, bas = haut de ligne K) ;
-	    3 références en haut-gauche avec traits dessinés ; 3 boutons positionnés
-	    (Effacer/Retour/Valider, Valider plus gros) ; bascule `set_side(LEFT)` →
-	    carré à gauche + références en haut-droite ; aucun ColorRect dans l'arbre ;
+		B-J/1-9 (9×9 cases, bord droit, haut = ligne B, bas = haut de ligne K) ;
+		3 références en haut-gauche avec traits dessinés ; 3 boutons positionnés
+		(Effacer/Retour/Valider, Valider plus gros) ; bascule `set_side(LEFT)` →
+		carré à gauche + références en haut-droite ; aucun ColorRect dans l'arbre ;
 	    undo unitaire retire un trait à la fois ; sélection de référence change
 	    le kanji de scoring (parfait = 100) + `par_time_ms`. 7/7 OK.
 - [x] **Chantier 3 — Base de données de kanji étendue (4 → 14)** :
@@ -299,6 +299,64 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 	    aléatoire faible ; `KANJI_DATA` = 14 entrées ; popup ouvrable avec
 	    chacun des 14 kanji. Lancement complet : aucun script error ni warning.
 
+### 🕹️ Session "boucle de jeu minimale" — quête, loot, inventaire, XP, level up (Phase 1)
+- [x] **Autoload Inventory** (`res://autoload/inventory.gd`, déclaré dans
+	  `project.godot`) : inventaire **minimal en liste** (pas de grille). Données
+	  avant code : `ITEM_DEFS` = fiches d'items (thème 曜日, cohérent avec les 7
+	  types de mobs) — `{"name", "rarity"}` + `RARITY_COLOR` (Commun/Rare).
+	  7 items : Essence de Feu/Eau/Terre (Commun), Éclat de Lune, Bois Sacré,
+	  Pépite d'Or, Rayon de Soleil (Rare). API : `add_item(id, count)` (merge),
+	  `remove_item(id, count) -> bool` (pas de retrait partiel), `get_count`,
+	  `has`, `item_def`, `rarity_color` ; signal `inventory_changed`.
+- [x] **Loot basique dans `mob.gd`** : `DROP_TABLE` (const, 1 ligne par type de
+	  mob `MobType` → `{"item_id", "chance"}` ; Commun ~60%, Rare 25-30%). Un seul
+	  lancer par mort dans `_drop_loot()` (appelé depuis `die()`), réussite →
+	  `Inventory.add_item`. Données avant code : ajouter un loot = ligne dans
+	  `DROP_TABLE` + fiche dans `Inventory.ITEM_DEFS`.
+- [x] **Autoload QuestSystem** (`res://autoload/quest_system.gd`) : quête ultra
+	  simple façon Alpha. Données avant code : `QUESTS` = fiches
+	  `{"id","name","description","objective": {"type":"kill_mobs","mob_type","count"},
+	  "reward_xp","reward_items"}`. La quête active par défaut : **"Élimine 5
+	  esprits d'eau (水)"** → récompense 300 XP + 1 Pépite d'Or. `mob.gd::die()`
+	  appelle `QuestSystem.on_mob_killed(mob_type)` (les kills d'un autre type ne
+	  comptent pas). À la complétion : récompenses puis **la quête recommence**
+	  (boucle jouable minimale : le combat garde un but). Signaux
+	  `quest_progress(quest_id,current,required)` et `quest_completed(quest_id)`.
+- [x] **XP = précision × vitesse moyen du combat** (TODO Phase 1 fermé) :
+	  `skill_bar.gd` accumule `_combat_multipliers` (un multiplicateur précision ×
+	  vitesse par kanji dessiné, `_performance_multiplier()` ; échec <40 = 0).
+	  `mob.gd::die()` : `SkillBar.xp_multiplier()` (moyenne, 1.0 si aucun kanji)
+	  puis `reset_combat()`, XP du kill = `50 × moyenne`. Factorisé : `_compute_damage`
+	  et `_performance_multiplier` partagent les mêmes paliers (pas de divergence).
+- [x] **Feedback de level up** : `PlayerStats` émet `leveled_up(level)` (élevé
+	  dans `add_xp`). `summary_panel.gd` affiche une **bannière centrée "Niveau X !"**
+	  (Label construit en code, ajouté au CanvasLayer UI en `call_deferred` — piège
+	  : `add_child` direct pendant le `_ready` de la construction de main.tscn →
+	  "Parent node is busy", corrigé), disparaît après ~2s (tween).
+- [x] **UI QuestTracker** (`res://ui/quest_tracker.gd`, nœud `UI/QuestTracker` dans
+	  `main.tscn`, en-dessous de MacroBar) : petit panneau translucide (StyleBoxFlat,
+	  construit en code) affichant le nom de la quête + "Élimine N mobs : x / N".
+	  Écoute `quest_progress`/`quest_completed` ; `mouse_filter = IGNORE` (ne bloque
+	  pas le clic sur le monde).
+- [x] **Fenêtre Inventaire** (`res://ui/inventory_window.gd/.tscn`, même structure
+	  que `keybind_window` : Backdrop + CenterPanel + VBox) : liste des items
+	  "Nom ×quantité", coloré selon la rareté, reconstruite sur
+	  `inventory_changed`. Accessible via le menu circulaire : action id=0
+	  (placeholder "1") remplacée par **"Inventaire"** → scene
+	  `res://ui/inventory_window.tscn` (`MenuConfig.actions`). Les 5 autres
+	  placeholders inchangés.
+- [x] **Validation headless** (autoload temporaire `temp_session_test.gd`, retiré
+	  ensuite) : merge/remove/get_count d'inventaire (6 cas), quête (démarrage
+	  0/5, kills du mauvais type ignorés, complétion → +1 Pépite d'Or + 3 bulles
+	  DAoC de 300 XP, relance auto), multiplicateur XP (parfait rapide 2.6, échec 0,
+	  moyenne (2.6+0)/2 = 1.3, reset), tables de drop complètes pour les 7 types +
+	  items existants, 300 drops réels de FEU → essence_feu (attendu ~180), level up
+	  (niveau 2 + signal), fenêtre inventaire liste non vide, QuestTracker présent,
+	  action 0 = Inventaire. **TOUT OK.** Lancement complet `--quit-after 6` : aucun
+	  script error ni warning. Piège test : `xp_in_bubble` reboucle par bulles
+	  (vérifier `bubbles_filled`, pas `xp_in_bubble`) et les lambdas capturent les
+	  locals par valeur (compter via une méthode membre).
+
 ## 🚧 En cours
 - [ ] _(aucun blocage actif)_
 
@@ -317,8 +375,11 @@ Toute cette session RÉUTILISE cette source de vérité (le joystick lit
 `config_changed`). AUCUNE seconde source de vérité créée.
 
 ## 📋 À faire ensuite (priorité)
-1. Phase 1 : quête simple, loot, inventaire, XP = précision × vitesse moyen du combat
-   (TODO laissé en commentaire dans `skill_bar.gd`).
+1. **Phase 1 — quête, loot, inventaire, XP = précision × vitesse, level up FAITS**
+   (session "boucle de jeu minimale"). Objectif Alpha quasi complet : reste le
+   premier test réel "est-ce fun ?". Points d'ouverture naturels : affiner la
+   quête (plusieurs quêtes, récompenses), meilleure diversité de loot (raretés,
+   équipement), prêrequis de niveau.
 2. Associer un effet élémentaire aux kanji/mobs (Feu/Terre/Vent/Eau...) — actuellement
    pas de différenciation de puissance entre éléments (uniquement visuelle). La base
    est maintenant assez riche (14 kanji) pour ça. Idem : `_build_candidates()` propose
@@ -332,7 +393,7 @@ Toute cette session RÉUTILISE cette source de vérité (le joystick lit
    publiques et prêtes à être réutilisées par les boutons mobiles aussi).
 4. Contrôle mobile — joystick + boutons FACE/STICK FAITS. Reste éventuel :
    boutons de skills mobiles (slots 1-4, réutiliser SkillBar), test réel sur
-   Android. Le joystick a été corrigé (dead zone + reset au centre).
+   Android.
 
 ---
 
@@ -362,6 +423,14 @@ Toute cette session RÉUTILISE cette source de vérité (le joystick lit
   (ouverte via le menu circulaire, action id=5 "Raccourcis").
 - `ui/virtual_joystick.gd` / `.tscn` — joystick virtuel mobile + boutons
   FACE/STICK, positionné à l'opposé du menu (synchro croisée).
+- `autoload/inventory.gd` — autoload Inventory : inventaire minimal (liste),
+  `ITEM_DEFS` (7 items 曜日), add/remove/get_count, signal `inventory_changed`.
+- `autoload/quest_system.gd` — autoload QuestSystem : quête "élimine 5 Eau",
+  `on_mob_killed(mob_type)`, récompenses (XP + items), relance automatique.
+- `ui/quest_tracker.gd` — panneau de progression de quête (UI/QuestTracker dans
+  main.tscn).
+- `ui/inventory_window.gd` / `.tscn` — fenêtre Inventaire (liste colorée par
+  rareté), ouverte via le menu circulaire (action id=0 "Inventaire").
 - `player.gd` — `face()`, `toggle_stick()`/`_process_stick()` (état `sticking`),
   combinaison input clavier + `MobileInput.move_vector`.
 - `CREDITS.md` — attribution KanjiVG (licence CC BY-SA 3.0).
@@ -462,6 +531,27 @@ Toute cette session RÉUTILISE cette source de vérité (le joystick lit
   kanji = SVG KanjiVG dans `kanji/kanji_data/` + vérifier le codepoint
   (`kvg:element`) + `--import` + entrée `KANJI_DATA` + ligne dans
   `run_auto_test_all()` + `CREDITS.md`. Constantes de scoring intactes.
+- **XP du kill = 50 × (précision × vitesse) moyen du combat** (session Phase 1) :
+  `skill_bar.gd` accumule `_combat_multipliers` (1 par kanji dessiné,
+  `_performance_multiplier`, échec <40 = 0), `mob.gd::die()` lit `xp_multiplier()`
+  (1.0 si aucun kanji) puis `reset_combat()`. Ne pas dupliquer les paliers
+  (dégâts et XP partagent `_performance_multiplier`).
+- **Loot = DROP_TABLE dans mob.gd + fiches dans Inventory.ITEM_DEFS** (choix de
+  session, données avant code) : 1 ligne par type de mob (`MobType` → item_id +
+  chance), 1 seul lancer par mort. Ajouter un loot = 2 modifs de données, pas de
+  logique. Rareté = info d'affichage (pas de stats d'équipement pour l'Alpha).
+- **Quête = fiche dans QuestSystem.QUESTS** (choix de session) : objectif
+  `kill_mobs{mob_type, count}` (valeurs `MobType` de mob.gd, hardcodées en ints
+  avec commentaires — pas de class_name partagé), récompenses XP + items.
+  La quête **recommence automatiquement** à la complétion (boucle Alpha).
+  `mob.gd` appelle `on_mob_killed` ; l'UI QuestTracker écoute les signaux.
+- **Feedback level up** : `PlayerStats.leveled_up(level)` émis dans `add_xp` ;
+  bannière "Niveau X !" construite en code par `summary_panel.gd`, ajoutée au
+  CanvasLayer UI **en `call_deferred`** (add_child direct pendant le _ready de
+  main.tscn → erreur "Parent node is busy").
+- **Fenêtre Inventaire dans le menu** : action id=0 de `MenuConfig.actions`
+  (placeholder "1") remplacée par "Inventaire". L'id d'action ne bouge pas
+  (référence stable pour slot_actions) ; les autres placeholders inchangés.
 
 ## 🔗 Dépendances / éléments externes
 - Godot 4.7.1 : `C:\Program Files (x86)\Godot\Godot_v4.7.1-stable_win64_console.exe`.
@@ -498,6 +588,13 @@ utiliser la souris pour le stick ; dead zone 12% + reset au centre au relâcheme
 `MobileInput.move_vector` est lu par player.gd (garde `active`). Écran de dessin :
 le carré suit le côté du menu (bascule avec lui), 3 références cliquables en haut
 du côté opposé, boutons Valider/Retour/Effacer en bas, Annuler (ESC) en haut-droite.
+**Quête/loot/inventaire (Phase 1)** : la quête active "Élimine 5 Eau" est affichée
+par `UI/QuestTracker` (sous MacroBar) ; tuer 5 mobs Eau → +300 XP + 1 Pépite d'Or
+puis relance. Les mobs droppent selon `mob.DROP_TABLE` (essences/raretés) →
+`Inventory` (lire via la fenêtre "Inventaire" du menu circulaire, action 0).
+XP du kill = 50 × moyenne des précision×vitesse du combat. Level up → bannière
+centrée "Niveau X !". Tests rapides : `Inventory.add_item/remove_item`,
+`QuestSystem.on_mob_killed(mob_type)`, `SkillBar._performance_multiplier(...)`.
 Pour la console : lancer `chcp 65001` avant (sinon kanji mal affichés, codepage 850).
 
 ---
