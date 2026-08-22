@@ -11,6 +11,8 @@ extends Panel
 var dragging = false
 var drag_offset = Vector2.ZERO
 
+var _level_label: Label = null
+
 func _ready():
 	_build_bubbles(xp_bubbles)
 	_build_bubbles(pvp_xp_bubbles)
@@ -19,11 +21,14 @@ func _ready():
 	PlayerStats.power_changed.connect(_on_power_changed)
 	PlayerStats.xp_changed.connect(_on_xp_changed)
 	PlayerStats.pvp_xp_changed.connect(_on_pvp_xp_changed)
+	PlayerStats.leveled_up.connect(_on_leveled_up)
 
 	_on_health_changed()
 	_on_power_changed()
 	_on_xp_changed()
 	_on_pvp_xp_changed()
+
+	_build_level_label()
 
 func _process(_delta):
 	var target = TargetSystem.current_target
@@ -63,6 +68,32 @@ func _on_pvp_xp_changed():
 	pvp_xp_bar.max_value = PlayerStats.pvp_xp_per_bubble
 	pvp_xp_bar.value = PlayerStats.pvp_xp_in_bubble
 	_update_bubbles(pvp_xp_bubbles, PlayerStats.pvp_bubbles_filled)
+
+# --- Feedback de level up (bannière centrée, disparaît après 2s) ----------
+
+func _build_level_label():
+	_level_label = Label.new()
+	_level_label.add_theme_font_size_override("font_size", 44)
+	_level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_level_label.z_index = 100
+	_level_label.visible = false
+	# Ajouté au CanvasLayer UI (le parent de ce panel) pour être centré à
+	# l'écran. deferred : ce _ready tourne pendant la construction de main.tscn.
+	get_parent().add_child.call_deferred(_level_label)
+
+func _on_leveled_up(level):
+	if _level_label == null:
+		return
+	_level_label.text = "Niveau %d !" % level
+	_level_label.visible = true
+	_level_label.reset_size()  # force le calcul de la taille avant de centrer
+	var vp := get_viewport().get_visible_rect().size
+	_level_label.global_position = Vector2((vp.x - _level_label.size.x) / 2.0, vp.y * 0.3)
+	_level_label.modulate.a = 1.0
+	var tween := create_tween()
+	tween.tween_interval(1.2)
+	tween.tween_property(_level_label, "modulate:a", 0.0, 0.8)
+	tween.tween_callback(func(): _level_label.visible = false)
 
 func _gui_input(event):
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:

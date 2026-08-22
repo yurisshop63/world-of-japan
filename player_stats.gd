@@ -5,6 +5,7 @@ signal power_changed
 signal xp_changed
 signal pvp_xp_changed
 signal player_died
+signal leveled_up(level)
 
 var max_health = 100
 var health = 100
@@ -51,6 +52,7 @@ func add_xp(amount):
 		if bubbles_filled >= 10:
 			bubbles_filled = 0
 			level += 1
+			leveled_up.emit(level)
 	xp_changed.emit()
 
 func add_pvp_xp(amount):

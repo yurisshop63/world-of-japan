@@ -36,6 +36,11 @@ var _active_popup = null
 var _pending_target = null
 var _pending_skill_index = -1
 
+# Multiplicateurs de performance (précision × vitesse) accumulés pendant le
+# combat en cours. Consommés à la mort d'un mob (mob.gd -> SkillBar.xp_multiplier
+# puis reset_combat) pour calculer l'XP du kill. Un échec (score < 40) compte 0.
+var _combat_multipliers: Array = []
+
 func _ready():
 	for i in range(9):
 		slots.append(null)
@@ -120,12 +125,27 @@ func _on_drawing_validated(score, elapsed_ms):
 	_reset_pending()
 	if target == null or not is_instance_valid(target):
 		return
-	# TODO Phase 1 : XP finale = produit précision × vitesse (score moyen du
-	# combat), au lieu du seul score moyen.
+	# TODO Phase 1 (fait) : l'XP du kill est multipliée par la performance
+	# moyenne du combat (précision × vitesse) — voir xp_multiplier().
 	var damage = _compute_damage(score, elapsed_ms, par_time_ms)
+	_combat_multipliers.append(_performance_multiplier(score, elapsed_ms, par_time_ms))
 	target.take_damage(damage)
 	print(skill["name"], " -> score kanji ", score, " en ", elapsed_ms,
 			" ms (par ", par_time_ms, " ms) : ", damage, " dégâts.")
+
+## Moyenne des multiplicateurs précision × vitesse du combat en cours.
+## 1.0 si aucun kanji dessiné (kill sans skill -> XP de base non bonus).
+func xp_multiplier() -> float:
+	if _combat_multipliers.is_empty():
+		return 1.0
+	var total := 0.0
+	for mult in _combat_multipliers:
+		total += float(mult)
+	return total / float(_combat_multipliers.size())
+
+## Remet à zéro l'accumulateur de performance (appelé à la mort d'un mob).
+func reset_combat() -> void:
+	_combat_multipliers.clear()
 
 func _on_drawing_cancelled():
 	_reset_pending()
@@ -170,3 +190,24 @@ func _compute_damage(score, elapsed_ms, par_time_ms):
 	else:
 		speed_mult = 0.6
 	return max(int(round(base * precision_mult * speed_mult)), 1)
+
+# Multiplicateur précision × vitesse du kanji (0 si échec < 40). Utilisé pour
+# l'XP du kill (moyenne du combat) et factorisé avec _compute_damage.
+func _performance_multiplier(score, elapsed_ms, par_time_ms):
+	if score < 40:
+		return 0.0
+	var precision_mult = 1.0
+	if score >= 70 and score <= 90:
+		precision_mult = 1.5
+	elif score > 90:
+		precision_mult = 2.0
+	var speed_mult = 1.0
+	if elapsed_ms <= par_time_ms * 0.6:
+		speed_mult = 1.3
+	elif elapsed_ms <= par_time_ms:
+		speed_mult = 1.0
+	elif elapsed_ms <= par_time_ms * 1.5:
+		speed_mult = 0.8
+	else:
+		speed_mult = 0.6
+	return precision_mult * speed_mult

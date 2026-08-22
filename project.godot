@@ -24,6 +24,8 @@ KeybindConfig="*uid://cpdslvkx12gtq"
 MobileInput="*uid://mg1f2ynoyk8v"
 MenuConfig="*uid://b4nsejo7tiboh"
 WindowManager="*uid://c6n8ewddhow6g"
+Inventory="*uid://7cc35hfeh7go"
+QuestSystem="*uid://dp85a47svuxe2"
 
 [display]
 

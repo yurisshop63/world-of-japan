@@ -27,6 +27,21 @@ var health = 20
 @export var respawn_time = 15.0
 @export var regen_rate = 5.0
 
+# --- Loot (Phase 1 Alpha) ------------------------------------------------
+# Table de drop simple par type de mob (un seul lancer par mort) :
+# {item_id, chance}. Les fiches d'items sont dans Inventory.ITEM_DEFS.
+# Données avant code : ajouter un loot = ajouter une ligne ici + une fiche item.
+const XP_BASE = 50  # XP de base d'un kill, multipliée par la perf kanji du combat
+const DROP_TABLE := {
+	MobType.FEU:   {"item_id": "essence_feu",   "chance": 0.6},
+	MobType.EAU:   {"item_id": "essence_eau",   "chance": 0.6},
+	MobType.TERRE: {"item_id": "essence_terre", "chance": 0.6},
+	MobType.LUNE:  {"item_id": "eclat_lune",    "chance": 0.3},
+	MobType.BOIS:  {"item_id": "bois_sacre",    "chance": 0.3},
+	MobType.OR:    {"item_id": "pepite_or",     "chance": 0.25},
+	MobType.SOLEIL:{"item_id": "rayon_soleil",  "chance": 0.25},
+}
+
 enum State { IDLE, CHASE, RETURN, DEAD }
 var state = State.IDLE
 
@@ -131,9 +146,17 @@ func take_damage(amount):
 
 func die():
 	state = State.DEAD
-	PlayerStats.add_xp(50)
+	# XP = base × (précision × vitesse) moyen des kanji utilisés pendant le
+	# combat (SkillBar accumule les multiplicateurs, on les consomme ici).
+	var mult := SkillBar.xp_multiplier()
+	SkillBar.reset_combat()
+	PlayerStats.add_xp(int(round(XP_BASE * mult)))
 	if TargetSystem.current_target == self:
 		TargetSystem.select(null)
+
+	# Quête (comptage de kills) + loot (Phase 1 Alpha).
+	QuestSystem.on_mob_killed(mob_type)
+	_drop_loot()
 
 	mesh.visible = false
 	health_bar.visible = false
@@ -141,6 +164,19 @@ func die():
 
 	await get_tree().create_timer(respawn_time).timeout
 	_respawn()
+
+## Loot basique : un seul lancer de dé par type de mob (DROP_TABLE). Réussite
+## -> l'item va dans l'inventaire (Inventory, autoload).
+func _drop_loot():
+	if not DROP_TABLE.has(mob_type):
+		return
+	var entry: Dictionary = DROP_TABLE[mob_type]
+	if randf() < float(entry.get("chance", 0.0)):
+		var item_id := str(entry.get("item_id", ""))
+		if item_id != "":
+			Inventory.add_item(item_id, 1)
+			var def := Inventory.item_def(item_id)
+			print("Loot : ", def.get("name", item_id), " (", def.get("rarity", "?"), ")")
 
 func _respawn():
 	health = max_health

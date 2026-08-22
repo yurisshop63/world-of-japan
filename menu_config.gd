@@ -19,7 +19,7 @@ var side: int = Side.RIGHT
 ## "scene" : chemin vers une scène de fenêtre (laisser vide -> fenêtre
 ## générique de test).
 var actions: Array = [
-	{"id": 0, "label": "1", "scene": ""},
+	{"id": 0, "label": "Inventaire", "scene": "res://ui/inventory_window.tscn"},
 	{"id": 1, "label": "2", "scene": ""},
 	{"id": 2, "label": "3", "scene": ""},
 	{"id": 3, "label": "4", "scene": ""},
