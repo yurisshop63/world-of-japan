@@ -356,6 +356,28 @@ minimale (1 perso, 1 zone, mobs, combat kanji).
 	  script error ni warning. Piège test : `xp_in_bubble` reboucle par bulles
 	  (vérifier `bubbles_filled`, pas `xp_in_bubble`) et les lambdas capturent les
 	  locals par valeur (compter via une méthode membre).
+- [x] **Session "noms de mobs → UI target + quête"** : le cadre de target
+	  affiche le nom du mob et le QuestTracker précise quel mob tuer.
+	  - `mob.gd` : const `MOB_NAMES` (`MobType` → String, ex "Feu (火)",
+	    "Eau (水)"...) — **kanji réutilisés de `KANJI_DATA` (skill_bar.gd)** pour
+	    la cohérence pédagogique (火水±月木金日, thème 曜日). API :
+	    `get_display_name()` (instance, lu par l'UI de target) + `mob_name(mob_type)`
+	    (statique, utilisable sans instance par la quête).
+	  - UI target (`summary_panel.gd` + nouveau nœud `TargetNameLabel` sous
+	    `UI/SummaryPanel` dans main.tscn, au-dessus de TargetHealthBar) :
+	    `_process()` affiche `target.get_display_name()` + masque le label sans
+	    cible (même visibilité que la barre de vie).
+	  - `quest_system.gd` : `objective_target_name()` (via `mob.gd::mob_name`,
+	    preload `MobScript`) + `objective_text()` → "Élimine 5 Eau (水)". Plus
+	    AUCUN entier brut de `mob_type` n'est exposé à l'UI.
+	  - `quest_tracker.gd::_refresh()` : `_progress_label` = `objective_text()`
+	    + " : x / N" (précise le mob à tuer).
+	  - Validation headless (autoload temporaire retiré) : display name des 7
+	    types (Feu (火)…Soleil (日)), statique sans instance, `objective_text()`
+	    = "Élimine 5 Eau (水)", label de target rempli ("Feu (火)") puis masqué à
+	    la désélection. **TOUT OK.** Lancement complet `--quit-after 6` : aucun
+	    script error ni warning. Ni DROP_TABLE, ni scoring kanji, ni formule de
+	    dégâts touchés.
 
 ## 🚧 En cours
 - [ ] _(aucun blocage actif)_
@@ -414,7 +436,8 @@ Toute cette session RÉUTILISE cette source de vérité (le joystick lit
 - `HexagonalGround.gd` — terrain : grille de tuiles hexagonales colorées par
   FastNoiseLite (roche/terre/herbe), collision + murs.
 - `mob.gd` / `mob.tscn` — mob paramétré par `mob_type` (7 types 曜日, modèles en
-  primitives low-poly). `main.tscn` — 21 instances (3 par type).
+  primitives low-poly). `MOB_NAMES` (`MobType` → "Feu (火)"...), `get_display_name()`
+  (instance) + `mob_name(mob_type)` (statique). `main.tscn` — 21 instances (3 par type).
 - `autoload/keybind_config.gd` — autoload KeybindConfig : actions face/stick,
   touches par défaut C/V, `user://keybinds.cfg`.
 - `autoload/mobile_input.gd` — autoload MobileInput : `move_vector` (input
@@ -427,10 +450,14 @@ Toute cette session RÉUTILISE cette source de vérité (le joystick lit
   `ITEM_DEFS` (7 items 曜日), add/remove/get_count, signal `inventory_changed`.
 - `autoload/quest_system.gd` — autoload QuestSystem : quête "élimine 5 Eau",
   `on_mob_killed(mob_type)`, récompenses (XP + items), relance automatique.
+  `objective_text()` → "Élimine 5 Eau (水)" (nom via `mob.gd::mob_name`, plus
+  d'int brut exposé à l'UI).
 - `ui/quest_tracker.gd` — panneau de progression de quête (UI/QuestTracker dans
-  main.tscn).
+  main.tscn), affiche `objective_text()` + " : x / N".
 - `ui/inventory_window.gd` / `.tscn` — fenêtre Inventaire (liste colorée par
   rareté), ouverte via le menu circulaire (action id=0 "Inventaire").
+- `summary_panel.gd` — UI du cadre de target : `TargetNameLabel` (nom du mob,
+  `get_display_name()`) au-dessus de `TargetHealthBar`, masqués sans cible.
 - `player.gd` — `face()`, `toggle_stick()`/`_process_stick()` (état `sticking`),
   combinaison input clavier + `MobileInput.move_vector`.
 - `CREDITS.md` — attribution KanjiVG (licence CC BY-SA 3.0).
