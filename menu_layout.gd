@@ -43,6 +43,20 @@ static func rect_from_right(viewport_size: Vector2, cols: Vector2i, rows: Vector
 	return Rect2(Vector2(x, y), Vector2(w, h))
 
 
+## Rect pour une plage de grille exprimée en lettres de lignes (A→K, de haut en
+## bas) et en numéros de colonnes (1→24, depuis la droite). Ex. la fenêtre
+## Statistiques : rect_from_grid(vp, "A", "I", 3, 11) = case A11 → case I3.
+static func rect_from_grid(viewport_size: Vector2, row_from: String, row_to: String, col_from: int, col_to: int) -> Rect2:
+	return rect_from_right(viewport_size, Vector2i(col_from, col_to), Vector2i(_row_index(row_from), _row_index(row_to)))
+
+
+## Convertit une lettre de ligne ("A" → 0 ... "K" → 10) en index, clampé pour
+## rester dans la grille.
+static func _row_index(letter: String) -> int:
+	var index := int(letter.to_upper().unicode_at(0)) - 65
+	return clampi(index, 0, ROWS - 1)
+
+
 ## Miroir horizontal d'un rect par rapport à la largeur de l'écran.
 ## C'est cette fonction qui transforme automatiquement la disposition
 ## "à droite" en disposition "à gauche".

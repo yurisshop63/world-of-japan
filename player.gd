@@ -14,6 +14,10 @@ var pitch = 0.0
 var max_pitch = deg_to_rad(70.0)
 var auto_run = false
 
+## Vitesse de rotation max (rad/s) du curseur caméra B13 à pleine déflexion
+## (voir ui/look_cursor.gd). À régler en playtest.
+const LOOK_SPEED_MAX := 2.0
+
 # --- Commandes de combat façon DAoC (/face, /stick) ------------------------
 const MELEE_RANGE := 1.5  # portée de mêlée des mobs (mob.gd: melee_range)
 var sticking := false     # mode "collé à la cible" (toggle)
@@ -86,6 +90,17 @@ func _physics_process(delta):
 	# dans _process_chase). La gravité / collision de ce script reste active.
 	if sticking:
 		_process_stick()
+
+	# Regard curseur B13 (MobileInput.look_vector, "manche à balai") : rotation
+	# continue tant que le curseur est écarté de sa position neutre.
+	# Yaw (x) sur le joueur — même axe que le look souris ; pitch (y) sur
+	# camera_pivot, avec sa PROPRE limite ±90° (plus large que le look souris
+	# 70°). Signes : gauche → tourne à gauche, haut → la caméra monte.
+	var lv := MobileInput.look_vector
+	if lv.length() > 0.01:
+		rotate_y(-lv.x * LOOK_SPEED_MAX * delta)
+		pitch = clamp(pitch - lv.y * LOOK_SPEED_MAX * delta, -deg_to_rad(90.0), deg_to_rad(90.0))
+		camera_pivot.rotation.x = pitch
 
 	move_and_slide()
 

@@ -45,18 +45,27 @@ func add_item(item_id: String, count: int = 1) -> void:
 	inventory_changed.emit()
 
 
-## Retire "count" exemplaires (toute la pile si count <= 0). Renvoie false si
-## la quantité demandée n'était pas disponible (aucun retrait partiel).
+## Retire "count" exemplaires. Si count <= 0, retire TOUTE la pile (renvoie
+## true si l'item existait avec au moins 1 exemplaire, false sinon).
+## Pour count > 0 : renvoie false si la quantité demandée n'était pas
+## disponible (aucun retrait partiel).
 func remove_item(item_id: String, count: int = 1) -> bool:
 	for i in range(items.size()):
 		var entry: Dictionary = items[i]
 		if entry["id"] != item_id:
 			continue
-		if int(entry["count"]) < count:
-			return false
-		entry["count"] = int(entry["count"]) - count
-		if int(entry["count"]) <= 0:
+		var have: int = int(entry["count"])
+		if count <= 0:
 			items.remove_at(i)
+			inventory_changed.emit()
+			return true
+		if have < count:
+			return false
+		have -= count
+		if have <= 0:
+			items.remove_at(i)
+		else:
+			entry["count"] = have
 		inventory_changed.emit()
 		return true
 	return false

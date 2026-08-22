@@ -36,4 +36,6 @@ func _rebuild() -> void:
 
 
 func _on_close_pressed() -> void:
-	queue_free()
+	# Via WindowManager (toggle) pour que rappuyer sur le bouton du menu
+	# puisse rouvrir la fenêtre après une fermeture manuelle.
+	WindowManager.close_current()

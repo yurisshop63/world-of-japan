@@ -20,7 +20,7 @@ var side: int = Side.RIGHT
 ## générique de test).
 var actions: Array = [
 	{"id": 0, "label": "Inventaire", "scene": "res://ui/inventory_window.tscn"},
-	{"id": 1, "label": "2", "scene": ""},
+	{"id": 1, "label": "Statistiques", "scene": "res://ui/stats_window.tscn"},
 	{"id": 2, "label": "3", "scene": ""},
 	{"id": 3, "label": "4", "scene": ""},
 	{"id": 4, "label": "5", "scene": ""},
@@ -29,6 +29,12 @@ var actions: Array = [
 
 ## slot_actions[i] = id de l'action affichée à l'emplacement i (0 à 5)
 var slot_actions: Array = [0, 1, 2, 3, 4, 5]
+
+## Angles (radians) des boutons FACE/STICK sur leur orbite autour du joystick
+## (Ticket "boutons orbitaux"). Valeurs par défaut = positions d'origine
+## (arc haut-droite / bas-droite du joystick) pour ne pas surprendre.
+var face_angle: float = -0.958
+var stick_angle: float = -0.209
 
 
 func _ready() -> void:
@@ -60,10 +66,25 @@ func set_side(new_side: int) -> void:
 	config_changed.emit()
 
 
+## Mémorise l'angle (radians) du bouton FACE sur son orbite. Pas de signal :
+## le joystick est le seul consommateur et relit la valeur au prochain drag.
+func set_face_angle(angle: float) -> void:
+	face_angle = angle
+	save_config()
+
+
+## Mémorise l'angle (radians) du bouton STICK sur son orbite.
+func set_stick_angle(angle: float) -> void:
+	stick_angle = angle
+	save_config()
+
+
 func save_config() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("menu", "side", side)
 	cfg.set_value("menu", "slot_actions", slot_actions)
+	cfg.set_value("joystick", "face_angle", face_angle)
+	cfg.set_value("joystick", "stick_angle", stick_angle)
 	cfg.save(SAVE_PATH)
 
 
@@ -74,3 +95,5 @@ func load_config() -> void:
 		return
 	side = cfg.get_value("menu", "side", Side.RIGHT)
 	slot_actions = cfg.get_value("menu", "slot_actions", [0, 1, 2, 3, 4, 5])
+	face_angle = cfg.get_value("joystick", "face_angle", face_angle)
+	stick_angle = cfg.get_value("joystick", "stick_angle", stick_angle)

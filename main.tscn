@@ -9,9 +9,9 @@
 [ext_resource type="Script" uid="uid://bty0y2e6qhq3b" path="res://title_bar_drag.gd" id="6_titledrag"]
 [ext_resource type="Script" uid="uid://1lj121lu0b4n" path="res://GridOverlay.gd" id="9_kek77"]
 [ext_resource type="Script" uid="uid://dngx1ayw0tab6" path="res://menu_root_button.gd" id="10_4c57u"]
-[ext_resource type="Script" uid="uid://cso4uo2guamc1" path="res://top_right_menu.gd" id="11_topmenu"]
 [ext_resource type="PackedScene" path="res://ui/virtual_joystick.tscn" id="12_joy"]
 [ext_resource type="Script" path="res://ui/quest_tracker.gd" id="13_quest"]
+[ext_resource type="Script" path="res://ui/look_cursor.gd" id="14_look"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.3
@@ -28,20 +28,6 @@ size = Vector3(0.12, 0.5, 0.12)
 
 [sub_resource type="BoxMesh" id="BoxMesh_leg"]
 size = Vector3(0.15, 0.6, 0.15)
-
-[sub_resource type="GDScript" id="GDScript_kek77"]
-script/source = "extends CanvasLayer
-
-
-# Called when the node enters the scene tree for the first time.
-func _ready() -> void:
-	pass # Replace with function body.
-
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
-"
 
 [node name="Main" type="Node3D" unique_id=904192149]
 script = ExtResource("1_main")
@@ -189,7 +175,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.2, 1, -32.8)
 mob_type = 6
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1230186980]
-script = SubResource("GDScript_kek77")
 
 [node name="SummaryPanel" type="Panel" parent="UI" unique_id=1517284105]
 anchors_preset = 3
@@ -278,32 +263,6 @@ anchors_preset = 0
 offset_top = 20.0
 offset_bottom = 20.0
 
-[node name="TopRightMenu" type="Control" parent="UI" unique_id=1463695902]
-layout_mode = 3
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -80.0
-offset_top = 20.0
-offset_right = -15.0
-offset_bottom = 100.0
-grow_horizontal = 0
-script = ExtResource("11_topmenu")
-
-[node name="MenuButton" type="Button" parent="UI/TopRightMenu" unique_id=1648376488]
-visible = false
-layout_mode = 0
-offset_right = 65.0
-offset_bottom = 40.0
-text = "Petit Menu"
-
-[node name="MenuPanel" type="Panel" parent="UI/TopRightMenu" unique_id=219789588]
-visible = false
-layout_mode = 0
-offset_top = 45.0
-offset_right = 65.0
-offset_bottom = 165.0
-
 [node name="GridOverlay" type="Control" parent="UI" unique_id=1169902166]
 layout_mode = 3
 anchors_preset = 15
@@ -329,3 +288,8 @@ offset_top = 95.0
 offset_right = 320.0
 offset_bottom = 175.0
 script = ExtResource("13_quest")
+
+[node name="LookCursor" type="Control" parent="UI" unique_id=1000000102]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("14_look")

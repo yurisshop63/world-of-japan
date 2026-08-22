@@ -3,34 +3,36 @@ extends Control
 ## doigt dans un rayon limité). Émet un Vector2 normalisé via l'autoload
 ## MobileInput.move_vector (0,0 = relâché, magnitude 1 = poussé au max).
 ##
-## Deux petits boutons FACE/STICK en arc à droite du cercle (hors du rayon de
-## déplacement pour ne pas gêner le pouce) : FACE appelle Player.face(),
-## STICK appelle Player.toggle_stick() et affiche un état visuel actif/inactif
-## selon Player.sticking.
+## Deux boutons FACE/STICK placés sur une orbite (cercle de rayon fixe) autour
+## du centre du joystick, via la classe OrbitButton : un tap déclenche
+## Player.face() / Player.toggle_stick(), un long press + glissement les fait
+## tourner autour du cercle (l'angle est persisté dans MenuConfig).
 ##
-## Repositionnement : appui long (long_press_time) puis glissement, comme
-## draggable_button.gd. Synchronisation croisée avec le menu circulaire :
+## Repositionnement global : appui long (long_press_time) puis glissement,
+## comme draggable_button.gd. Synchronisation croisée avec le menu circulaire :
 ## menu et joystick sont TOUJOURS sur des côtés opposés (source de vérité :
 ## MenuConfig.side, voir PROGRESS.md étape 1).
 
 @export var long_press_time: float = 0.35
 @export var drag_threshold: float = 14.0
 
-const RADIUS_BASE := 60.0
-const RADIUS_STICK := 32.0
-const MAX_OFFSET := 36.0
+const RADIUS_BASE := 90.0
+const RADIUS_STICK := 48.0
+const MAX_OFFSET := 54.0
 # Zone morte du stick (fraction de MAX_OFFSET) : tant que le doigt/curseur
 # reste dans cette zone autour du centre, move_vector reste à ZERO (évite
 # qu'un tremblement ou un résidu de position au relâchement fasse dériver
-# le déplacement). 12% ≈ 4.3 px sur MAX_OFFSET=36.
+# le déplacement). 12% ≈ 6.5 px sur MAX_OFFSET=54.
 const DEAD_ZONE := 0.12
 
-const BUTTON_SIZE := 52.0
-const BUTTON_GAP := 14.0
+## Taille des boutons FACE/STICK (orbitaux).
+const BUTTON_SIZE := 78.0
+## Rayon de l'orbite des boutons FACE/STICK autour du centre du joystick.
+const BUTTON_ORBIT_RADIUS := RADIUS_BASE + 40.0
 
-## Taille totale du Control (contient base + boutons à droite).
-const WIDTH := 260.0
-const HEIGHT := 160.0
+## Taille totale du Control (contient base + boutons).
+const WIDTH := 390.0
+const HEIGHT := 240.0
 
 var _stick_offset := Vector2.ZERO
 var _is_touching := false
@@ -39,8 +41,8 @@ var _press_pos := Vector2.ZERO
 var _long_press_timer: Timer
 var _ignore_next_config := false
 
-var _face_button: Button
-var _stick_button: Button
+var _face_button: OrbitButton
+var _stick_button: OrbitButton
 var _player_ref: Node3D
 
 
@@ -63,26 +65,27 @@ func _ready() -> void:
 
 
 func _build_buttons() -> void:
-	# Position en arc à droite du cercle, hors du rayon du stick.
-	var face_pos := Vector2(RADIUS_BASE + 40, -BUTTON_SIZE / 2.0 - BUTTON_GAP)
-	var stick_pos := Vector2(RADIUS_BASE + 40, BUTTON_SIZE / 2.0 + BUTTON_GAP)
-
-	_face_button = _make_round_button(face_pos, "FACE")
+	# Les boutons orbitent autour du centre du joystick ; angles mémorisés dans
+	# MenuConfig (persistés au relâchement d'un drag). Valeurs par défaut =
+	# positions d'origine (arc haut-droite / bas-droite).
+	_face_button = _make_orbit_button("FACE")
 	_face_button.name = "FaceButton"
-	_face_button.pressed.connect(_on_face_pressed)
+	_face_button.setup(_center(), BUTTON_ORBIT_RADIUS, MenuConfig.face_angle)
+	_face_button.tapped.connect(_on_face_pressed)
+	_face_button.angle_changed.connect(MenuConfig.set_face_angle)
 
-	_stick_button = _make_round_button(stick_pos, "STICK")
+	_stick_button = _make_orbit_button("STICK")
 	_stick_button.name = "StickButton"
-	_stick_button.pressed.connect(_on_stick_pressed)
+	_stick_button.setup(_center(), BUTTON_ORBIT_RADIUS, MenuConfig.stick_angle)
+	_stick_button.tapped.connect(_on_stick_pressed)
+	_stick_button.angle_changed.connect(MenuConfig.set_stick_angle)
 
 
-func _make_round_button(pos: Vector2, text: String) -> Button:
-	var btn := Button.new()
+func _make_orbit_button(text: String) -> OrbitButton:
+	var btn := OrbitButton.new()
 	btn.text = text
-	btn.position = pos
 	btn.size = Vector2(BUTTON_SIZE, BUTTON_SIZE)
 	btn.add_theme_font_size_override("font_size", 11)
-	btn.focus_mode = Control.FOCUS_NONE
 	MenuStyle.apply_round_styles(btn, int(BUTTON_SIZE / 2), Color(0.05, 0.05, 0.05, 0.9))
 	add_child(btn)
 	return btn

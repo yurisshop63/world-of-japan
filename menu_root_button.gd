@@ -7,7 +7,7 @@ extends DraggableButton
 ##   haut-droit et le coin haut-gauche de l'écran (snap automatique au
 ##   relâchement selon la moitié d'écran où le doigt/curseur se trouve).
 
-const SLOT_BUTTON_SCRIPT := preload("C:/Users/naomi/OneDrive/Documents/jeu-mmorpg-japanese-learning-ARCHIVE/menu_slot_button.gd")
+const SLOT_BUTTON_SCRIPT := preload("res://menu_slot_button.gd")
 
 var menu_window: Control
 var slot_buttons: Array = []
@@ -97,7 +97,13 @@ func _open_menu() -> void:
 	menu_window.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	menu_window.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	menu_window.z_index = 9
-	get_tree().current_scene.add_child(menu_window)
+	# Dans la même couche canvas que le HUD (UI), pour que le sous-menu reste
+	# cliquable au-dessus des fenêtres d'action du WindowManager (couche 1).
+	var ui_layer := get_tree().current_scene.get_node_or_null("UI")
+	if ui_layer:
+		ui_layer.add_child(menu_window)
+	else:
+		get_tree().current_scene.add_child(menu_window)
 
 	slot_buttons.clear()
 	for i in range(MenuConfig.slot_actions.size()):
